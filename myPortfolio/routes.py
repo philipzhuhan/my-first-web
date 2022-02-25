@@ -9,3 +9,7 @@ def home():
 @app.route("/about")
 def about():
     return render_template('about.html')
+
+@app.route("/game")
+def jsGame():
+    return render_template('js-rpg-game.html')
