@@ -1,5 +1,5 @@
-let vpWidth = window.innerWidth;
-let vpHeight = window.innerHeight;
+let vpWidth = document.documentElement.clientWidth;
+let vpHeight = document.documentElement.clientHeight;
 const canvasW = vpWidth;
 const canvasH = vpHeight;
 let canvas, ctx;
@@ -77,7 +77,6 @@ class Player {
         var srcX = this.srcX + this.srcFrameW * this.frameX;
         var srcY = this.srcY + this.srcFrameH * this.frameY;
         ctx.drawImage(this.sprite, srcX, srcY, this.srcFrameW, this.srcFrameH, this.x, this.y, this.width, this.height);
-        // console.log('draw player: ' + srcX + ' ' + srcY + ' ' + this.srcFrameW + ' ' + this.srcFrameH + ' ' + this.x + ' ' + this.y + ' ' + this.width + ' ' + this.height);
         // draw hp bar
         ctx.fillStyle = '#808080';
         ctx.fillRect(this.hpBarX, this.hpBarY, this.hpBarW, this.hpBarH);
@@ -348,9 +347,10 @@ function animate() {
 }
 
 function adjustCanvasSize() {
+    // console.log(document.documentElement.clientWidth + ' / ' + document.documentElement.clientHeight);
     var originW = canvas.width;
-    vpWidth = window.innerWidth;
-    vpHeight = window.innerHeight;
+    vpWidth = document.documentElement.clientWidth;
+    vpHeight = document.documentElement.clientHeight;
 
     // canvas should be canvasW * canvasH scale
     if (vpWidth / vpHeight <= canvasW / canvasH) {
@@ -412,8 +412,8 @@ var touch, firstTouchX, firstTouchY;
 var trackMove = false;
 
 function enableMove(e) {
-    var moveX = e.pageX - firstTouchX;
-    var moveY = e.pageY - firstTouchY;
+    var moveX = e.touches[0].pageX - firstTouchX;
+    var moveY = e.touches[0].pageY - firstTouchY;
     if (curGameState === gameStates[0] && trackMove == true) {
         player.moving = true;
         if (moveX > 0) {
@@ -449,8 +449,9 @@ function disableMove(e) {
 }
 
 window.addEventListener("mousedown", function(e) {
+    // e.preventDefault();
     firstTouchX = e.pageX;
-    firstTouchY = e.pageY
+    firstTouchY = e.pageY;
     if (curGameState === gameStates[0]) {
         trackMove = true;
         window.addEventListener("mousemove", enableMove);
@@ -459,11 +460,15 @@ window.addEventListener("mousedown", function(e) {
 })
 
 window.addEventListener("touchstart", function(e) {
-    firstTouchX = e.pageX;
-    firstTouchY = e.pageY
+    e.preventDefault();
+    touch = e.touches[0];
+    // console.log(touch.pageX + ' / ' + touch.pageY);
+    firstTouchX = touch.pageX;
+    firstTouchY = touch.pageY
     if (curGameState === gameStates[0]) {
+        // console.log("touch start");
         trackMove = true;
         window.addEventListener("touchmove", enableMove);
         window.addEventListener("touchend", disableMove);
     }
-})
+}, { passive: false })
