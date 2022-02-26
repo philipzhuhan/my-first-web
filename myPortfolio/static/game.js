@@ -4,6 +4,7 @@ const canvasW = vpWidth;
 const canvasH = vpHeight;
 let canvas, ctx;
 let map = new Image();
+let touchDetected = false;
 
 class Player {
     constructor(canvasW, canvasH) {
@@ -22,7 +23,7 @@ class Player {
         this.width = canvasW * 0.05;
         this.height = this.width / this.srcFrameW * this.srcFrameH;
         this.moving = false;
-        this.speed = this.width / 2;
+        this.speed = this.width / 3;
 
         // player game attribute
         this.lvl = 1;
@@ -36,8 +37,6 @@ class Player {
         this.def = this.lvl * 15 + 15;
         this.gold = 0;
         this.inv = [];
-        this.moving = false;
-        this.speed = this.width / 2;
         // in battle
         this.inBattle = false;
         this.isAlive = true;
@@ -60,7 +59,7 @@ class Player {
         this.y *= factor;
         this.width *= factor;
         this.height *= factor;
-        this.speed = this.width / 2;
+        this.speed = this.width / 3;
 
         this.hpBarX = this.x;
         this.hpBarY = this.y + this.height;
@@ -409,41 +408,62 @@ window.addEventListener("keyup", function(e) {
     }
 })
 
-window.addEventListener("touchstart", function(e) {
-    e.preventDefault();
-    if (curGameState === 'Explore') {
-        var touch = e.touches[0];
-        var firstTouchX = touch.pageX;
-        var firstTouchY = touch.pageY;
+var touch, firstTouchX, firstTouchY;
+var trackMove = false;
 
-        this.window.addEventListener("touchmove", function() {
-            var moveX = touch.pageX - firstTouchX;
-            var moveY = touch.pageY - firstTouchY;
-            if (moveX > 0) {
-                keys["ArrorRight"] = true;
-                player.move = true;
-            }
-            if (moveX < 0) {
-                keys["ArrorLeft"] = true;
-                player.move = true;
-            }
-            if (moveY > 0) {
-                keys["ArrorDown"] = true;
-                player.move = true;
-            }
-            if (moveY < 0) {
-                keys["ArrorUp"] = true;
-                player.move = true;
-            }
-        })
+function enableMove(e) {
+    var moveX = e.pageX - firstTouchX;
+    var moveY = e.pageY - firstTouchY;
+    if (curGameState === gameStates[0] && trackMove == true) {
+        player.moving = true;
+        if (moveX > 0) {
+            keys["ArrowLeft"] = false;
+            keys["ArrowRight"] = true;
+        }
+        if (moveX < 0) {
+            keys["ArrowLeft"] = true;
+            keys["ArrowRight"] = false;
+        }
+        if (moveY > 0) {
+            keys["ArrowUp"] = false;
+            keys["ArrowDown"] = true;
+        }
+        if (moveY < 0) {
+            keys["ArrowUp"] = true;
+            keys["ArrowDown"] = false;
+        }
+    }
+}
+
+function disableMove(e) {
+    window.removeEventListener("mousemove", enableMove);
+    window.removeEventListener("touchmove", enableMove);
+    trackMove = false
+    player.moving = false;
+    keys["ArrowRight"] = false;
+    keys["ArrowLeft"] = false;
+    keys["ArrowDown"] = false;
+    keys["ArrowUp"] = false;
+    window.removeEventListener("mouseup", disableMove);
+    window.removeEventListener("touchend", disableMove);
+}
+
+window.addEventListener("mousedown", function(e) {
+    firstTouchX = e.pageX;
+    firstTouchY = e.pageY
+    if (curGameState === gameStates[0]) {
+        trackMove = true;
+        window.addEventListener("mousemove", enableMove);
+        window.addEventListener("mouseup", disableMove);
     }
 })
 
-window.addEventListener("touchend", function(e) {
-    if (curGameState === 'Explore') {
-        for (const key of keys) {
-            key = false;
-        }
-        player.moving = false;
+window.addEventListener("touchstart", function(e) {
+    firstTouchX = e.pageX;
+    firstTouchY = e.pageY
+    if (curGameState === gameStates[0]) {
+        trackMove = true;
+        window.addEventListener("touchmove", enableMove);
+        window.addEventListener("touchend", disableMove);
     }
 })
