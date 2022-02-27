@@ -1,5 +1,6 @@
 let vpWidth = document.documentElement.clientWidth;
 let vpHeight = document.documentElement.clientHeight;
+var screenOrientation = (screen.orientation || {}).type || screen.mozOrientation || screen.msOrientation;
 const canvasW = vpWidth;
 const canvasH = vpHeight;
 let canvas, ctx;
@@ -7,7 +8,7 @@ let map = new Image();
 let touchDetected = false;
 
 class Player {
-    constructor(canvasW, canvasH) {
+    constructor(x, y, width, height) {
         this.sprite = new Image();
         this.sprite.src = "static/img/PlayerSpriteSheet.png";
         // this.srcW = 600;
@@ -18,10 +19,10 @@ class Player {
         this.srcY = 0;
         this.frameX = 0;
         this.frameY = 0;
-        this.x = canvasW / 2;
-        this.y = canvasH / 2;
-        this.width = canvasW * 0.05;
-        this.height = this.width / this.srcFrameW * this.srcFrameH;
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
         this.moving = false;
         this.speed = this.width / 3;
 
@@ -305,7 +306,15 @@ function startAnimating(fps) {
     ctx = canvas.getContext("2d");
     document.body.insertBefore(canvas, document.body.childNodes[0]);
     map.src = "static/img/stars-6170172_1280.png";
-    player = new Player(canvas.width, canvas.height);
+    var playerW, playerH;
+    if (screenOrientation == 'portrait-primary' || screenOrientation == 'portrait-secondary') {
+        playerH = canvas.height * 0.05;
+        playerW = playerH / 150 * 115;
+    } else {
+        playerW = canvas.width * 0.05;
+        playerH = playerW / 115 * 150;
+    }
+    player = new Player(canvas.width / 2, canvas.height / 2, playerW, playerH);
     initMobs();
     adjustCanvasSize();
     // map.width = vpWidth;
@@ -329,7 +338,7 @@ function animate() {
         // Get ready for next frame by setting then=now, but also adjust for your
         // specified fpsInterval not being a multiple of RAF's interval (16.7ms)
         then = now - (elapsed % fpsInterval);
-
+        console.log(screenOrientation);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         adjustCanvasSize();
         ctx.imageSmoothingEnabled = false;
@@ -347,24 +356,32 @@ function animate() {
 }
 
 function adjustCanvasSize() {
-    // console.log(document.documentElement.clientWidth + ' / ' + document.documentElement.clientHeight);
+    var newOrientation = (screen.orientation || {}).type || screen.mozOrientation || screen.msOrientation;
     var originW = canvas.width;
     vpWidth = document.documentElement.clientWidth;
     vpHeight = document.documentElement.clientHeight;
 
-    // canvas should be canvasW * canvasH scale
-    if (vpWidth / vpHeight <= canvasW / canvasH) {
+    if (newOrientation != screenOrientation) {
         canvas.width = vpWidth;
-        canvas.height = canvas.width * canvasH / canvasW;
-    } else {
         canvas.height = vpHeight;
-        canvas.width = canvas.height * canvasW / canvasH;
+
+        screenOrientation = newOrientation;
+    } else {
+        // canvas should be canvasW * canvasH scale
+        if (vpWidth / vpHeight <= canvasW / canvasH) {
+            canvas.width = vpWidth;
+            canvas.height = canvas.width * canvasH / canvasW;
+        } else {
+            canvas.height = vpHeight;
+            canvas.width = canvas.height * canvasW / canvasH;
+        }
+        var factor = canvas.width / originW;
+        player.scale(factor);
+        for (i = 0; i < mobs.length; i++) {
+            mobs[i].scale(factor);
+        }
     }
-    var factor = canvas.width / originW;
-    player.scale(factor);
-    for (i = 0; i < mobs.length; i++) {
-        mobs[i].scale(factor);
-    }
+
 }
 
 function drawBackground() {
