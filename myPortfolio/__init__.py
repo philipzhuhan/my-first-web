@@ -8,7 +8,7 @@ from flask_admin.contrib.sqla import ModelView
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '904f2f19163922f31238fa34fb3a862c'
 # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgres://xvzaqevdwvtkpo:d4b0ca73204703ab36a8fd51972f9836ad969323b610762950f06df7b2972ccf@ec2-34-247-151-118.eu-west-1.compute.amazonaws.com:5432/d9g68gci9ao0n4'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://xvzaqevdwvtkpo:d4b0ca73204703ab36a8fd51972f9836ad969323b610762950f06df7b2972ccf@ec2-34-247-151-118.eu-west-1.compute.amazonaws.com:5432/d9g68gci9ao0n4'
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 login_manager = LoginManager(app)
