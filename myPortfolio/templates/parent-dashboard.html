@@ -1,0 +1,55 @@
+{% extends "layout.html" %}
+{% block content %}
+    <div class="content-section">
+        <div>
+            <img class="rounded-circle account-img" src="{{ parent.image_file }}">
+            <div class="media-body">
+                <h2 class="account-heading">{{ parent.first_name }}</h2>
+                <table class="table">
+                    <tr>
+                        <th scope="row">Last Name</th>
+                        <th>{{ parent.last_name }}</th>
+                    </tr>
+                    <tr>
+                        <th scope="row">Email</th>
+                        <th>{{ parent.email }}</th>
+                    </tr>
+                    <tr>
+                        <th scope="row">Phone</th>
+                        <th>{{ parent.phone }}</th>
+                    </tr>
+                    <tr>
+                        <th scope="row">Address</th>
+                        <th>{{ parent.address }}</th>
+                    </tr>
+                </table>
+            </div>
+            <a type="button" class="btn btn-outline-info" href="{{ url_for('edit_account') }}">Edit</a>
+        </div>
+    </div>
+    <div class="content-section" id="display_children">
+        {% if children %}
+            <table class="table">
+                <thead class="thead_light">
+                    <tr>
+                        <th scope="col">Child</th>
+                        <th scope="col">Name</th>
+                        <th scope="col">Grade</th>
+                        <th scope="col">Date Joined</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for child in children %}
+                        <tr>
+                            <td><img class="rounded-circle account-img" src="{{ child.image_file }}"></td>
+                            <td><a href="{{ child.id }}">{{ child.first_name }}</a></td>
+                            <td>{{ child.grade }}</td>
+                            <td>{{ child.date_joined }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+        <a type="button" class="btn btn-outline-info" href="{{ url_for('add_child') }}">Add Child</a>
+    </div>
+{% endblock content %}

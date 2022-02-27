@@ -18,11 +18,12 @@ admin = Admin(app)
 
 from myPortfolio.models import User, Parent, Child
 
+### for local db
 # db.drop_all()
 # db.create_all()
-
 # admin_user = User(username='admin', password=bcrypt.generate_password_hash('password').decode('utf-8'), role='admin', first_name='Philip')
 # db.session.add(admin_user)
 # db.session.commit()
+### for local db
 
 from myPortfolio import routes

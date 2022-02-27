@@ -14,7 +14,7 @@ class User(db.Model, UserMixin):
     role = db.Column(db.String(20), nullable=False)
     first_name = db.Column(db.String(20), nullable=False)
     date_joined = db.Column(db.Date, nullable=False, default=datetime.utcnow)
-    image_file = db.Column(db.String(20), nullable=False, default='default.jpg')
+    image_file = db.Column(db.String(20), nullable=False, default='default.png')
     
     def __repr__(self):
         return f"User('{self.id}', '{self.username}', '{self.first_name}', '{self.role}', '{self.date_joined}')"

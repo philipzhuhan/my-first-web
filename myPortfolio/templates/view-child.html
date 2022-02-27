@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+{% block content %}
+    <div class="content-section">
+        <img class="rounded-circle account-img" src="{{ child.image_file }}">
+        <div class="media-body">
+            <h2 class="account-heading">{{ child.first_name }}</h2>
+            <table class="table">
+                <tr>
+                    <th scope="row">Date Joined</th>
+                    <th>{{ child.date_joined }}</th>
+                </tr>
+                <tr>
+                    <th scope="row">Grade</th>
+                    <th>{{ child.grade }}</th>
+                </tr>
+            </table>
+        </div>
+    </div>
+{% endblock content %}
