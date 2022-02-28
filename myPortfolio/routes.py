@@ -1,10 +1,11 @@
 import os
 import secrets
 from PIL import Image
-from flask import render_template, url_for, flash, redirect, request
+from datetime import date, datetime, timedelta
+from flask import render_template, url_for, flash, redirect, request, jsonify
 from myPortfolio import app, db, bcrypt, admin
 from myPortfolio.forms import RegistrationForm, LoginForm, RegisterChildForm, UpdateParentAccountForm
-from myPortfolio.models import User, Parent, Child
+from myPortfolio.models import User, Parent, Child, Game_Character_Save
 from flask_login import login_user, logout_user, current_user, login_required
 from flask_admin.contrib.sqla.view import ModelView
 
@@ -20,6 +21,7 @@ class MyModelView(ModelView):
 admin.add_view(MyModelView(User, db.session))
 admin.add_view(MyModelView(Parent, db.session))
 admin.add_view(MyModelView(Child, db.session))
+admin.add_view(MyModelView(Game_Character_Save, db.session))
 
 @app.route("/")
 @app.route("/home")
@@ -187,5 +189,59 @@ def view(id):
         return redirect(url_for('home'))
 
 @app.route("/game")
+@login_required
 def jsGame():
-    return render_template('js-rpg-game.html')
+    if current_user.role == 'child':
+        return render_template('js-rpg-game.html')
+    else:
+        return redirect(url_for('dashboard'))
+
+@app.route("/save_progress", methods=['GET', 'POST'])
+@login_required
+def save_progress():
+    req = request.get_json()
+    today = date.today()
+    #subject = req["subject"]
+    question_id = req["qnId"]
+    qn = Question.query.filter_by(id=question_id).first()
+    subject = qn.subject
+    topic = qn.topic
+    result = req["result"]
+    answer_txt = req["answerTxt"]
+    answer_pic = req["answerPic"]
+    duration = req["duration"]
+    progress = Progress(child_id=current_user.id, date=today, question_id=question_id, subject = subject, topic = topic, result=result, answer_txt = answer_txt, answer_pic = answer_pic, duration=duration)
+    db.session.add(progress)
+    db.session.commit()
+    return "OK"
+
+@app.route("/game/load_characters")
+@login_required
+def load_characters():
+    if current_user.role == 'child':
+        saved_character = Game_Character_Save.query.filter_by(child_id=current_user.id).first()
+        if saved_character:
+            char_object = {
+                "id": saved_character.id,
+                "character": saved_character.game_character,
+            }
+            return jsonify(char_object)
+
+@app.route("/game/save_character", methods=['GET', 'POST'])
+@login_required
+def save_character():
+    if current_user.role == 'child':
+        req = request.get_json()
+        today = datetime.today()
+        id = int(req["id"])
+        character = req["character"]
+        if id == -1:
+            char = Game_Character_Save(child_id=current_user.id, game_character=character, save_date=today)
+            db.session.add(char)
+        else:
+            char = Game_Character_Save.query.filter_by(id=id).first()
+            if today > char.save_date:
+                char.game_character = character
+                char.save_date = today
+        db.session.commit()
+        return 'OK'

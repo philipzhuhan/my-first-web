@@ -1,14 +1,16 @@
 let vpWidth = document.documentElement.clientWidth;
 let vpHeight = document.documentElement.clientHeight;
 var screenOrientation = (screen.orientation || {}).type || screen.mozOrientation || screen.msOrientation;
-const canvasW = vpWidth;
-const canvasH = vpHeight;
+const mapW = 1280;
+const mapH = 853;
 let canvas, ctx;
 let map = new Image();
 let touchDetected = false;
+const isMobile = ('ontouchstart' in document.documentElement && navigator.userAgent.match(/Mobi/));
 
 class Player {
     constructor(x, y, width, height) {
+        this.id = -1;
         this.sprite = new Image();
         this.sprite.src = "static/img/PlayerSpriteSheet.png";
         // this.srcW = 600;
@@ -27,6 +29,7 @@ class Player {
         this.speed = this.width / 3;
 
         // player game attribute
+        this.name = '';
         this.lvl = 1;
         this.maxHp = this.lvl * 100 + 50;
         this.maxMp = this.lvl * 50 + 50;
@@ -60,6 +63,35 @@ class Player {
         this.y *= factor;
         this.width *= factor;
         this.height *= factor;
+        this.speed = this.width / 3;
+
+        this.hpBarX = this.x;
+        this.hpBarY = this.y + this.height;
+        this.hpBarW = this.width;
+        this.hpBarH = this.height * 0.1;
+        this.curHpBarW = this.curHp / this.maxHp * this.hpBarW;
+        this.mpBarX = this.x;
+        this.mpBarY = this.hpBarY + this.hpBarH;
+        this.mpBarW = this.width;
+        this.mpBarH = this.height * 0.1;
+        this.curMpBarW = this.curMp / this.maxMp * this.mpBarW;
+    }
+
+    changeOrientation(newOrientation, oldCanvasW, oldCanvasH, newCanvasW, newCanvasH) {
+        var xPerc = this.x / oldCanvasW;
+        var yPerc = this.y / oldCanvasH;
+
+        this.x = newCanvasW * xPerc;
+        this.y = newCanvasH * yPerc;
+
+        if (newOrientation == 'portrait-primary' || screenOrientation == 'portrait-secondary') {
+            this.height = newCanvasH * 0.05;
+            this.width = this.height / 150 * 115;
+        } else {
+            this.width = newCanvasW * 0.05;
+            this.height = this.width / 115 * 150;
+        }
+
         this.speed = this.width / 3;
 
         this.hpBarX = this.x;
@@ -205,6 +237,40 @@ class Mob {
         this.curMpBarW = this.curMp / this.maxMp * this.mpBarW;
     }
 
+    changeOrientation(newOrientation, oldCanvasW, oldCanvasH, newCanvasW, newCanvasH) {
+        var xPerc = this.x / oldCanvasW;
+        var yPerc = this.y / oldCanvasH;
+        var originXPerc = this.initX / oldCanvasW;
+        var originYPerc = this.initY / oldCanvasH
+
+        this.x = newCanvasW * xPerc;
+        this.y = newCanvasH * yPerc;
+        this.initX = newCanvasW * originXPerc;
+        this.initY = newCanvasH * originYPerc;
+
+        if (newOrientation == 'portrait-primary' || screenOrientation == 'portrait-secondary') {
+            this.height = newCanvasH * 0.05;
+            this.width = this.height / 30 * 31.25;
+        } else {
+            this.width = newCanvasW * 0.05;
+            this.height = this.width / 31.25 * 30;
+        }
+
+        this.speed = this.width / 10;
+        this.moveLimit = this.width * 2;
+
+        this.hpBarX = this.x;
+        this.hpBarY = this.y + this.height;
+        this.hpBarW = this.width;
+        this.hpBarH = this.height * 0.1;
+        this.curHpBarW = this.curHp / this.maxHp * this.hpBarW;
+        this.mpBarX = this.x;
+        this.mpBarY = this.hpBarY + this.hpBarH;
+        this.mpBarW = this.width;
+        this.mpBarH = this.height * 0.1;
+        this.curMpBarW = this.curMp / this.maxMp * this.mpBarW;
+    }
+
     draw(ctx) {
         var srcX = this.srcX + this.srcFrameW * this.frameX;
         var srcY = this.srcY + this.srcFrameH * this.frameY;
@@ -294,6 +360,7 @@ let mobs = [];
 let mobNum = 3;
 let mapLvl = 1;
 const mobDirs = ["up", "right", "down", "left"];
+var savedCharacters = [];
 
 function startAnimating(fps) {
     fpsInterval = 1000 / fps;
@@ -315,6 +382,13 @@ function startAnimating(fps) {
         playerH = playerW / 115 * 150;
     }
     player = new Player(canvas.width / 2, canvas.height / 2, playerW, playerH);
+    retrieve_characters();
+    console.log('saved characters: ');
+    console.log(savedCharacters);
+    if (savedCharacters.length > 0) {
+        match_char_attributes(player, savedCharacters[0]);
+    }
+
     initMobs();
     adjustCanvasSize();
     // map.width = vpWidth;
@@ -338,7 +412,7 @@ function animate() {
         // Get ready for next frame by setting then=now, but also adjust for your
         // specified fpsInterval not being a multiple of RAF's interval (16.7ms)
         then = now - (elapsed % fpsInterval);
-        console.log(screenOrientation);
+        // console.log(screenOrientation);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         adjustCanvasSize();
         ctx.imageSmoothingEnabled = false;
@@ -348,7 +422,7 @@ function animate() {
             mobs[i].move();
             mobs[i].draw(ctx);
             if (distance(player, mobs[i]) <= player.width + mobs[i].width) {
-                console.log("player encountered mob " + i);
+                // console.log("player encountered mob " + i);
             }
         }
         player.draw(ctx);
@@ -358,22 +432,28 @@ function animate() {
 function adjustCanvasSize() {
     var newOrientation = (screen.orientation || {}).type || screen.mozOrientation || screen.msOrientation;
     var originW = canvas.width;
+    var originH = canvas.height;
     vpWidth = document.documentElement.clientWidth;
     vpHeight = document.documentElement.clientHeight;
 
-    if (newOrientation != screenOrientation) {
-        canvas.width = vpWidth;
-        canvas.height = vpHeight;
-
-        screenOrientation = newOrientation;
-    } else {
-        // canvas should be canvasW * canvasH scale
-        if (vpWidth / vpHeight <= canvasW / canvasH) {
+    if (isMobile) {
+        if (newOrientation != screenOrientation) {
+            console.log("screen orientation changed to: " + newOrientation);
             canvas.width = vpWidth;
-            canvas.height = canvas.width * canvasH / canvasW;
+            canvas.height = vpHeight;
+            player.changeOrientation(newOrientation, originW, originH, canvas.width, canvas.height);
+
+
+            screenOrientation = newOrientation;
+        } else {}
+    } else {
+        // canvas should be mapW * mapH scale
+        if (vpWidth / vpHeight <= mapW / mapH) {
+            canvas.width = vpWidth;
+            canvas.height = canvas.width * mapH / mapW;
         } else {
             canvas.height = vpHeight;
-            canvas.width = canvas.height * canvasW / canvasH;
+            canvas.width = canvas.height * mapW / mapH;
         }
         var factor = canvas.width / originW;
         player.scale(factor);
@@ -381,7 +461,6 @@ function adjustCanvasSize() {
             mobs[i].scale(factor);
         }
     }
-
 }
 
 function drawBackground() {
@@ -412,15 +491,20 @@ function distance(objA, objB) {
 }
 
 window.addEventListener("keydown", function(e) {
+    keys[e.key] = true;
     if (curGameState === 'Explore') {
-        keys[e.key] = true;
         player.moving = true;
+        if (e.key == "=") {
+            console.log(player.id);
+            save_character(player);
+            // retrieve_characters();
+        }
     }
 })
 
 window.addEventListener("keyup", function(e) {
+    keys[e.key] = false;
     if (curGameState === 'Explore') {
-        keys[e.key] = false;
         player.moving = false;
     }
 })
@@ -428,24 +512,49 @@ window.addEventListener("keyup", function(e) {
 var touch, firstTouchX, firstTouchY;
 var trackMove = false;
 
-function enableMove(e) {
-    var moveX = e.touches[0].pageX - firstTouchX;
-    var moveY = e.touches[0].pageY - firstTouchY;
+function trackTouchMove(e) {
+    var touchMoveX = e.touches[0].clientX - firstTouchX;
+    var touchMoveY = e.touches[0].clientY - firstTouchY;
     if (curGameState === gameStates[0] && trackMove == true) {
         player.moving = true;
-        if (moveX > 0) {
+        if (touchMoveX > 0) {
             keys["ArrowLeft"] = false;
             keys["ArrowRight"] = true;
         }
-        if (moveX < 0) {
+        if (touchMoveX < 0) {
             keys["ArrowLeft"] = true;
             keys["ArrowRight"] = false;
         }
-        if (moveY > 0) {
+        if (touchMoveY > 0) {
             keys["ArrowUp"] = false;
             keys["ArrowDown"] = true;
         }
-        if (moveY < 0) {
+        if (touchMoveY < 0) {
+            keys["ArrowUp"] = true;
+            keys["ArrowDown"] = false;
+        }
+    }
+}
+
+function trackMouseMove(e) {
+    var mouseMoveX = e.pageX - firstTouchX;
+    var mouseMoveY = e.pageY - firstTouchY;
+
+    if (curGameState === gameStates[0] && trackMove == true) {
+        player.moving = true;
+        if (mouseMoveX > 0) {
+            keys["ArrowLeft"] = false;
+            keys["ArrowRight"] = true;
+        }
+        if (mouseMoveX < 0) {
+            keys["ArrowLeft"] = true;
+            keys["ArrowRight"] = false;
+        }
+        if (mouseMoveY > 0) {
+            keys["ArrowUp"] = false;
+            keys["ArrowDown"] = true;
+        }
+        if (mouseMoveY < 0) {
             keys["ArrowUp"] = true;
             keys["ArrowDown"] = false;
         }
@@ -453,8 +562,8 @@ function enableMove(e) {
 }
 
 function disableMove(e) {
-    window.removeEventListener("mousemove", enableMove);
-    window.removeEventListener("touchmove", enableMove);
+    window.removeEventListener("mousemove", trackMouseMove);
+    window.removeEventListener("touchmove", trackTouchMove);
     trackMove = false
     player.moving = false;
     keys["ArrowRight"] = false;
@@ -471,7 +580,7 @@ window.addEventListener("mousedown", function(e) {
     firstTouchY = e.pageY;
     if (curGameState === gameStates[0]) {
         trackMove = true;
-        window.addEventListener("mousemove", enableMove);
+        window.addEventListener("mousemove", trackMouseMove);
         window.addEventListener("mouseup", disableMove);
     }
 })
@@ -480,12 +589,91 @@ window.addEventListener("touchstart", function(e) {
     e.preventDefault();
     touch = e.touches[0];
     // console.log(touch.pageX + ' / ' + touch.pageY);
-    firstTouchX = touch.pageX;
-    firstTouchY = touch.pageY
+    firstTouchX = touch.clientX;
+    firstTouchY = touch.clientY;
     if (curGameState === gameStates[0]) {
         // console.log("touch start");
         trackMove = true;
-        window.addEventListener("touchmove", enableMove);
+        window.addEventListener("touchmove", trackTouchMove);
         window.addEventListener("touchend", disableMove);
     }
 }, { passive: false })
+
+function save_progress() {
+    var today = new Date()
+    fetch('/save_progress', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            // subject: subject,
+            qnId: qnId,
+            result: result,
+            answerTxt: answerTxt,
+            answerPic: answerPic,
+            duration: duration,
+        }),
+    });
+    console.log("progress saved");
+}
+
+function save_character(char) {
+    var char_object = {
+        id: char.id,
+        character: JSON.stringify(char),
+    };
+    // console.log(char.id);
+    fetch('/game/save_character', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(char_object),
+    });
+    console.log("Character saved")
+    console.log(char_object['id'])
+        // retrieve_characters();
+}
+
+function retrieve_characters() {
+    var fetch_url = "/game/load_characters";
+    // savedCharacters = [];
+    fetch(fetch_url)
+        .then(res => {
+            if (res.ok) {
+                console.log('FETCH Characters SUCCESS');
+            } else {
+                console.log('FETCH Characters UNSUCCESSFUL');
+            }
+            return res.json()
+        })
+        .then(function(char) {
+            var character = JSON.parse(char.character);
+            character.id = char.id
+            console.log(player.sprite.src);
+            match_char_attributes(player, character);
+        })
+        .catch(error => console.log('ERROR LOAD CHARACTERS: ' + error))
+    console.log("Characters Loaded");
+}
+
+function match_char_attributes(char, saved_char) {
+    char.id = saved_char.id;
+
+    // player game attribute
+    char.name = saved_char.name;
+    char.lvl = saved_char.lvl;
+    char.maxHp = saved_char.maxHp;
+    char.maxMp = saved_char.maxMp;
+    char.curHp = saved_char.curHp;
+    char.curMp = saved_char.maxMp;
+    char.maxExp = saved_char.maxExp;
+    char.curExp = saved_char.curExp;
+    char.atk = saved_char.atk;
+    char.def = saved_char.def;
+    char.gold = saved_char.gold;
+    char.inv = saved_char.inv;
+
+    // return char;
+}

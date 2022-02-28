@@ -34,6 +34,13 @@ class Child(db.Model):
     id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
     parent_id = db.Column(db.Integer, db.ForeignKey('parent.id'), nullable=False)
     grade = db.Column(db.String(2), nullable=False)
+    game_characters = db.relationship('Game_Character_Save', backref='child', lazy=True)
     
     def __repr__(self):
         return f"Child('{self.id}')"
+
+class Game_Character_Save(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    child_id = db.Column(db.Integer, db.ForeignKey('child.id'), nullable=False)
+    game_character = db.Column(db.Text, nullable=False)
+    save_date = db.Column(db.DateTime, nullable=False)
