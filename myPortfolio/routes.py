@@ -168,9 +168,9 @@ def add_child():
 @app.route("/<id>")
 @login_required
 def view(id):
-    user = User.query.filter_by(id=int(id)).first()
+    user = User.query.filter_by(id=id).first()
     if user:
-        if int(id) == current_user.id:
+        if id == current_user.id:
             return redirect(url_for('dashboard'))
         else:
             if user.role == 'child':

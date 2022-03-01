@@ -1,10 +1,22 @@
-let vpWidth = document.documentElement.clientWidth;
-let vpHeight = document.documentElement.clientHeight;
+let vpWidth, vpHeight;
 var screenOrientation = (screen.orientation || {}).type || screen.mozOrientation || screen.msOrientation;
-const mapW = 1280;
-const mapH = 853;
+let background = new Image();
+let cursor = new Image();
+// Map sources
+const exploreMap = {
+    src: "static/img/stars-6170172_1280.png",
+    width: 1280,
+    height: 853,
+};
+// Map sources
+// const mapW = 1280;
+// const mapH = 853;
+const cursorImg = {
+    src: "static/img/sword-cursor.png",
+    width: 540,
+    height: 540,
+}
 let canvas, ctx;
-let map = new Image();
 let touchDetected = false;
 const isMobile = ('ontouchstart' in document.documentElement && navigator.userAgent.match(/Mobi/));
 
@@ -23,6 +35,8 @@ class Player {
         this.frameY = 0;
         this.x = x;
         this.y = y;
+        this.originX = this.x;
+        this.originY = this.y;
         this.width = width;
         this.height = height;
         this.moving = false;
@@ -86,10 +100,10 @@ class Player {
 
         if (newOrientation == 'portrait-primary' || screenOrientation == 'portrait-secondary') {
             this.height = newCanvasH * 0.05;
-            this.width = this.height / 150 * 115;
+            this.width = this.height / this.srcFrameH * this.srcFrameW;
         } else {
             this.width = newCanvasW * 0.05;
-            this.height = this.width / 115 * 150;
+            this.height = this.width / this.srcFrameW * this.srcFrameH;
         }
 
         this.speed = this.width / 3;
@@ -127,28 +141,30 @@ class Player {
     }
 
     move() {
-        if (keys["ArrowUp"] && this.y > 0) {
-            // move up
-            this.y -= this.speed;
-            this.frameY = 3;
-        }
+        if (curGameState === gameStates[0]) {
+            if (keys["ArrowUp"] && this.y > 0) {
+                // move up
+                this.y -= this.speed;
+                this.frameY = 3;
+            }
 
-        if (keys["ArrowLeft"] && this.x > 0) {
-            // move left
-            this.x -= this.speed;
-            this.frameY = 2;
-        }
+            if (keys["ArrowLeft"] && this.x > 0) {
+                // move left
+                this.x -= this.speed;
+                this.frameY = 2;
+            }
 
-        if (keys["ArrowDown"] && this.y < canvas.height - this.height * 1.2) {
-            // move down
-            this.y += this.speed;
-            this.frameY = 0;
-        }
+            if (keys["ArrowDown"] && this.y < canvas.height - this.height * 1.2) {
+                // move down
+                this.y += this.speed;
+                this.frameY = 0;
+            }
 
-        if (keys["ArrowRight"] && this.x < canvas.width - this.width) {
-            // move right
-            this.x += this.speed;
-            this.frameY = 1;
+            if (keys["ArrowRight"] && this.x < canvas.width - this.width) {
+                // move right
+                this.x += this.speed;
+                this.frameY = 1;
+            }
         }
 
         if (this.frameX < 3 && this.moving) this.frameX++
@@ -164,6 +180,27 @@ class Player {
         this.mpBarW = this.width;
         this.mpBarH = this.height * 0.1;
         this.curMpBarW = this.curMp / this.maxMp * this.mpBarW;
+    }
+
+    engageBattle(x, y, width) {
+        this.originX = this.x;
+        this.originY = this.y;
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = this.width / this.srcFrameW * this.srcFrameH;
+        this.frameX = 0;
+        this.frameY = 1;
+        this.moving = true;
+        this.speed = 0;
+    }
+
+    disEngageBattle(width) {
+        this.x = this.originX;
+        this.y = this.originY;
+        this.width = width;
+        this.height = this.width / this.srcFrameW * this.srcFrameH;
+        this.moving = false;
     }
 }
 
@@ -250,10 +287,10 @@ class Mob {
 
         if (newOrientation == 'portrait-primary' || screenOrientation == 'portrait-secondary') {
             this.height = newCanvasH * 0.05;
-            this.width = this.height / 30 * 31.25;
+            this.width = this.height / this.srcFrameH * this.srcFrameW;
         } else {
             this.width = newCanvasW * 0.05;
-            this.height = this.width / 31.25 * 30;
+            this.height = this.width / this.srcFrameW * this.srcFrameH;
         }
 
         this.speed = this.width / 10;
@@ -292,46 +329,48 @@ class Mob {
     }
 
     move() {
-        if (this.direction === "down") {
-            if (this.y >= this.initY + this.moveLimit || this.y >= canvas.height - this.height) {
-                // console.log("turn right");
-                this.direction = "right";
-                this.frameY = 1;
-            } else {
-                this.y += this.speed;
-                // console.log("move down");
+        if (curGameState === gameStates[0]) {
+            if (this.direction === "down") {
+                if (this.y >= this.initY + this.moveLimit || this.y >= canvas.height - this.height) {
+                    // console.log("turn right");
+                    this.direction = "right";
+                    this.frameY = 1;
+                } else {
+                    this.y += this.speed;
+                    // console.log("move down");
+                }
             }
-        }
 
-        if (this.direction === "right") {
-            if (this.x >= this.initX + this.moveLimit || this.x >= canvas.width - this.width) {
-                // console.log("turn up");
-                this.direction = "up";
-                this.frameY = 2;
-            } else {
-                this.x += this.speed;
-                // console.log("move right");
+            if (this.direction === "right") {
+                if (this.x >= this.initX + this.moveLimit || this.x >= canvas.width - this.width) {
+                    // console.log("turn up");
+                    this.direction = "up";
+                    this.frameY = 2;
+                } else {
+                    this.x += this.speed;
+                    // console.log("move right");
+                }
             }
-        }
 
-        if (this.direction === "up") {
-            if (this.y <= this.initY - this.moveLimit || this.y <= 0) {
-                // console.log("turn left");
-                this.direction = "left";
-                this.frameY = 0;
-            } else {
-                this.y -= this.speed;
-                // console.log("move up");
+            if (this.direction === "up") {
+                if (this.y <= this.initY - this.moveLimit || this.y <= 0) {
+                    // console.log("turn left");
+                    this.direction = "left";
+                    this.frameY = 0;
+                } else {
+                    this.y -= this.speed;
+                    // console.log("move up");
+                }
             }
-        }
 
-        if (this.direction === "left") {
-            if (this.x < this.initX - this.moveLimit || this.x <= 0) {
-                // console.log("turn down");
-                this.direction = "down";
-                this.frameY = 2;
-            } else {
-                this.x -= this.speed;
+            if (this.direction === "left") {
+                if (this.x < this.initX - this.moveLimit || this.x <= 0) {
+                    // console.log("turn down");
+                    this.direction = "down";
+                    this.frameY = 2;
+                } else {
+                    this.x -= this.speed;
+                }
             }
         }
 
@@ -349,10 +388,35 @@ class Mob {
         this.mpBarH = this.height * 0.1;
         this.curMpBarW = this.curMp / this.maxMp * this.mpBarW;
     }
+
+    engageBattle(x, y, width) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = this.width / this.srcFrameW * this.srcFrameH;
+        this.frameX = 0;
+        this.frameY = 0;
+        this.moving = true;
+        this.speed = 0;
+    }
+
+    disEngageBattle(width) {
+        this.x = this.initX;
+        this.y = this.initY;
+        this.width = width;
+        this.height = this.width / this.srcFrameW * this.srcFrameH;
+        this.frameX = 0;
+        this.frameY = 2;
+        this.direction = "down";
+        this.moving = true;
+        this.speed = this.width / 10;
+        this.moveLimit = this.width * 2;
+    }
 }
 
 let fps, fpsInterval, startTime, now, then, elapsed;
 let player;
+let playerX, playerY, playerW, playerH;
 let gameStates = ['Explore', 'Battle'];
 let curGameState = gameStates[0];
 let keys = [];
@@ -361,19 +425,34 @@ let mobNum = 3;
 let mapLvl = 1;
 const mobDirs = ["up", "right", "down", "left"];
 var savedCharacters = [];
+var battleMob;
+const actions = ["Attack", "Magic", "Escape"];
+let curActionIndex = 0;
+let curAction = actions[curActionIndex];
+let actionBoxX, actionBoxY, actionBoxW, actionBoxH;
+let actionOptionBoxW, actionOptionBoxH
+let actionBoxTxtSize, actionBoxTxtStyle, actionBoxTxtFontStyle;
+let displayQn = false;
+let qn = 'some question';
+let ansOpts = [];
+let qnX, qnY, qnOptW, qnOptH, optY;
+let cursorX, cursorY, cursorW, cursorH;
 
 function startAnimating(fps) {
     fpsInterval = 1000 / fps;
     then = Date.now();
     startTime = then;
+    // initialize Canvas
     canvas = document.createElement("canvas");
     canvas.style.margin = 0;
+    vpWidth = document.documentElement.clientWidth;
+    vpHeight = document.documentElement.clientHeight;
     canvas.width = vpWidth;
     canvas.height = vpHeight;
     ctx = canvas.getContext("2d");
     document.body.insertBefore(canvas, document.body.childNodes[0]);
-    map.src = "static/img/stars-6170172_1280.png";
-    var playerW, playerH;
+    background.src = exploreMap.src;
+    cursor.src = cursorImg.src;
     if (screenOrientation == 'portrait-primary' || screenOrientation == 'portrait-secondary') {
         playerH = canvas.height * 0.05;
         playerW = playerH / 150 * 115;
@@ -381,16 +460,16 @@ function startAnimating(fps) {
         playerW = canvas.width * 0.05;
         playerH = playerW / 115 * 150;
     }
+    // initialize player
     player = new Player(canvas.width / 2, canvas.height / 2, playerW, playerH);
+    // load from save if there's existing character saved
     retrieve_characters();
-    console.log('saved characters: ');
-    console.log(savedCharacters);
     if (savedCharacters.length > 0) {
         match_char_attributes(player, savedCharacters[0]);
     }
-
+    // initialize mobs
     initMobs();
-    adjustCanvasSize();
+    // adjustView();
     // map.width = vpWidth;
     // map.height = vpHeight;
     // objects.push(map);
@@ -414,27 +493,127 @@ function animate() {
         then = now - (elapsed % fpsInterval);
         // console.log(screenOrientation);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        adjustCanvasSize();
+        adjustView();
         ctx.imageSmoothingEnabled = false;
-        player.move();
-        drawBackground();
-        for (i = 0; i < mobs.length; i++) {
-            mobs[i].move();
-            mobs[i].draw(ctx);
-            if (distance(player, mobs[i]) <= player.width + mobs[i].width) {
-                // console.log("player encountered mob " + i);
+        if (curGameState === gameStates[0]) {
+            player.move();
+            drawBackground();
+            for (i = 0; i < mobs.length; i++) {
+                mobs[i].move();
+                mobs[i].draw(ctx);
+                if (distance(player, mobs[i]) <= player.width / 2 + mobs[i].width / 2) {
+                    // player encounter mob
+                    battleMob = mobs[i];
+                    mobs.splice(i, 1);
+                    curGameState = gameStates[1];
+                    curAction = actions[0];
+                    initiate_action_box();
+                    var playerW, playerX, playerY, mobX, mobY, mobW;
+                    playerW = canvas.height / 4;
+                    playerX = canvas.width / 4 - playerW / 2;
+                    playerY = canvas.height / 3 - playerW / player.srcFrameW * player.srcFrameH / 2;
+                    player.engageBattle(playerX, playerY, playerW);
+                    mobW = canvas.height / 4;
+                    mobX = canvas.width / 4 * 3 - mobW / 2;
+                    mobY = canvas.height / 3 - mobW / battleMob.srcFrameW * battleMob.srcFrameH / 2;
+                    battleMob.engageBattle(mobX, mobY, mobW);
+                    console.log("engaging battle");
+                }
             }
+            player.draw(ctx);
         }
-        player.draw(ctx);
+        if (curGameState === gameStates[1]) {
+            drawBackground();
+            drawActionsBox();
+            drawCursor();
+            player.move();
+            battleMob.move();
+            player.draw(ctx);
+            battleMob.draw(ctx);
+        }
+
     }
 }
 
-function adjustCanvasSize() {
+function initiate_action_box() {
+    displayQn = false; // display action choices, not display questions
+    curAction = actions[0]; // default action to point at first option
+    // initiate Action box element dimentions
+    actionBoxX = 0;
+    actionBoxH = canvas.height * 0.3;
+    actionBoxY = canvas.height - actionBoxH;
+    actionOptionBoxH = actionBoxH;
+    actionOptionBoxW = canvas.width / actions.length;
+    actionBoxTxtSize = Math.floor(actionOptionBoxH * 0.5);
+    actionBoxTxtStyle = "Arial";
+    actionBoxTxtFontStyle = actionBoxTxtSize + "px " + actionBoxTxtStyle;
+    // initiate Qn Box within Action box
+    qnX = actionBoxX;
+    qnY = actionBoxY;
+    qnBoxW = actionBoxW;
+    qnboxH = actionBoxH / 3 * 2;
+    qnOptW = actionBoxW / 4;
+    qnOptH = actionBoxH / 3;
+    optY = qnX + qnboxH;
+    displayQn = false;
+
+    // initiate cursor
+    cursorX = actionBoxX + actionOptionBoxW / 2;
+    cursorY = actionBoxY + actionOptionBoxH / 2;
+    cursorW = actionOptionBoxW / 3;
+    cursorH = cursorW / cursorImg.width * cursorImg.height;
+}
+
+function drawActionsBox() {
+    // draw action box
+    ctx.fillStyle = "white";
+    ctx.fillRect(actionBoxX, actionBoxY, canvas.width, actionBoxH);
+
+    if (displayQn == true) {
+        // draw question & options, place cursor on option 1
+        // atk selected or magic selected
+        // draw question
+        ctx.fillStyle = "black";
+        ctx.fillText(qn, qnX, qnY, qnBoxW);
+
+        // draw options
+        for (i = 0; i < ansOpts.length; i++) {
+            ctx.fillStyle = "green"; // "qnOptBgColor[i]"
+            // [qnX + qnOptW * 3, optY, qnOptW, qnOptH],
+            ctx.fillRect(qnX + qnOptW * i, optY, qnOptW, qnOptH);
+            ctx.beginPath();
+            ctx.lineWidth = "6";
+            ctx.strokeStyle = "blue";
+            ctx.rect(qnX + qnOptW * i, optY, qnOptW, qnOptH);
+            ctx.stroke();
+            ctx.fillStyle = "black";
+            ctx.fillText(ansOpts[i], qnX + qnOptW * i + qnOptW / 2.5, optY + actionBoxW);
+        }
+    } else {
+        // draw action buttons
+        ctx.font = actionBoxTxtFontStyle;
+        for (i = 0; i < actions.length; i++) {
+            ctx.fillStyle = "yellow";
+            ctx.fillRect(actionBoxX + actionOptionBoxW * i, actionBoxY, actionOptionBoxW, actionOptionBoxH);
+            ctx.beginPath();
+            ctx.lineWidth = "6";
+            ctx.strokeStyle = "blue";
+            ctx.rect(actionBoxX + actionOptionBoxW * i, actionBoxY, actionOptionBoxW, actionOptionBoxH);
+            ctx.stroke();
+            ctx.fillStyle = "black";
+            ctx.fillText(actions[i], actionBoxX + actionOptionBoxW * i, actionBoxY + actionBoxTxtSize);
+        }
+    }
+    //drawCursor();
+}
+
+function adjustView() {
     var newOrientation = (screen.orientation || {}).type || screen.mozOrientation || screen.msOrientation;
     var originW = canvas.width;
     var originH = canvas.height;
     vpWidth = document.documentElement.clientWidth;
     vpHeight = document.documentElement.clientHeight;
+    var mapW, mapH;
 
     if (isMobile) {
         if (newOrientation != screenOrientation) {
@@ -442,11 +621,15 @@ function adjustCanvasSize() {
             canvas.width = vpWidth;
             canvas.height = vpHeight;
             player.changeOrientation(newOrientation, originW, originH, canvas.width, canvas.height);
-
+            for (const mob in mobs) {
+                mob.changeOrientation(newOrientation, originW, originH, canvas.width, canvas.height);
+            }
 
             screenOrientation = newOrientation;
         } else {}
     } else {
+        mapW = exploreMap.width;
+        mapH = exploreMap.height;
         // canvas should be mapW * mapH scale
         if (vpWidth / vpHeight <= mapW / mapH) {
             canvas.width = vpWidth;
@@ -464,7 +647,20 @@ function adjustCanvasSize() {
 }
 
 function drawBackground() {
-    ctx.drawImage(map, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
+}
+
+function drawCursor() {
+    if (curGameState === gameStates[1]) {
+        if (displayQn == false) {
+            // manage cursor position & dimension in relation to action selection box
+            cursorX = actionBoxX + actionOptionBoxW * 0.5 + actionOptionBoxW * curActionIndex;
+            cursorY = actionBoxY + actionOptionBoxH / 2;
+            cursorW = actionOptionBoxW / 3;
+            cursorH = cursorW / cursorImg.width * cursorImg.height;
+        }
+    }
+    ctx.drawImage(cursor, cursorX, cursorY, cursorW, cursorH);
 }
 
 function initMobs() {
@@ -490,9 +686,49 @@ function distance(objA, objB) {
     return Math.sqrt(((objA.x + objA.width / 2) - (objB.x + objB.width / 2)) ** 2 + ((objA.y + objA.height / 2) - (objB.y + objB.height / 2)) ** 2);
 }
 
+function generateQn(opr, range) {
+    var fNum = Math.ceil(Math.random() * range);
+    var sNum = Math.ceil(Math.random() * range);
+    var ansRange;
+    qn = "How much is " + fNum + " " + opr + " " + sNum + "?";
+    opts = [];
+    var indexOfAns = Math.floor(Math.random() * 4);
+
+    if (opr === "*") {
+        ans = fNum * sNum;
+        ansRange = range * range;
+    }
+    if (opr === "/") {
+        ans = fNum / sNum;
+        ansRange = range;
+    }
+    if (opr === "+") {
+        ans = fNum + sNum;
+        ansRange = range + range;
+    }
+    if (opr === "-") {
+        ans = fNum - sNum;
+        ansRange = range;
+    }
+
+    //create 3 wrong options different from other options & add ans & wrong options in ops[];
+    for (i = 0; i < 4; i++) {
+        if (i == indexOfAns) {
+            opts.push(ans);
+        } else {
+            var opt = Math.ceil(Math.random() * ansRange);
+            while (opts.includes(opt) || opt == ans) {
+                opt = Math.ceil(Math.random() * ansRange);
+            }
+            opts.push(opt);
+        }
+    }
+}
+
 window.addEventListener("keydown", function(e) {
     keys[e.key] = true;
-    if (curGameState === 'Explore') {
+    // console.log(e.key);
+    if (curGameState === gameStates[0]) {
         player.moving = true;
         if (e.key == "=") {
             console.log(player.id);
@@ -500,7 +736,58 @@ window.addEventListener("keydown", function(e) {
             // retrieve_characters();
         }
     }
-})
+    if (curGameState === gameStates[1]) {
+        // Battle state
+        if (e.key == 'Escape') {
+            if (displayQn == true) {
+                // cur displaying question, returning to action selection
+                displayQn = false;
+            } else {
+                // cur displaying action selection, return to explore state
+                curGameState = gameStates[0];
+                player.disEngageBattle(canvas.width * 0.05);
+                battleMob.disEngageBattle(canvas.width * 0.05);
+                mobs.push(battleMob);
+            }
+        }
+
+        if (displayQn == false) {
+            // cur displaying question
+            if (e.key == 'ArrowRight') {
+                if (curActionIndex == actions.length - 1) {
+                    curActionIndex = 0;
+                } else {
+                    curActionIndex += 1;
+                }
+            }
+            if (e.key == 'ArrowLeft') {
+                if (curActionIndex == 0) {
+                    curActionIndex = actions.length - 1;
+                } else {
+                    curActionIndex -= 1;
+                }
+            }
+            curAction = actions[curActionIndex];
+            if (e.key == ' ' || e.key == 'Enter') {
+                if (curActionIndex == 0 || curActionIndex == 1) {
+                    // attack or magic is selected
+                    // create the first qn
+                    generateQn('+', 10);
+                    displayQn = true;
+                } else {
+                    // escape is selected
+                    // cur displaying action selection, return to explore state
+                    curGameState = gameStates[0];
+                    player.disEngageBattle(canvas.width * 0.05);
+                    battleMob.disEngageBattle(canvas.width * 0.05);
+                    mobs.push(battleMob);
+                }
+            }
+        } else {
+
+        }
+    }
+});
 
 window.addEventListener("keyup", function(e) {
     keys[e.key] = false;
