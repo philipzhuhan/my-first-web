@@ -958,8 +958,6 @@ window.addEventListener("touchstart", function(e) {
         window.addEventListener("touchmove", trackTouchMove);
         window.addEventListener("touchend", disableMove);
     }
-
-    if (curGameState === gameStates[1])
 }, { passive: false })
 
 function save_progress() {
