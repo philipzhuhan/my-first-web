@@ -6,6 +6,8 @@ from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 
 app = Flask(__name__)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL");
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 login_manager = LoginManager(app)
