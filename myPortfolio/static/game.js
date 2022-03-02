@@ -16,8 +16,18 @@ const cursorImg = {
     width: 540,
     height: 540,
 }
-let canvas, ctx;
+
+let touchArrow = new Image();
+const touchArrowImg = {
+    src: "static/img/touchArrow.png",
+    width: 801,
+    height: 610,
+}
 let touchDetected = false;
+let touchRotateRadians;
+let touchArrowW, touchArrowH;
+
+let canvas, ctx;
 const isMobile = ('ontouchstart' in document.documentElement && navigator.userAgent.match(/Mobi/));
 
 class Player {
@@ -201,6 +211,7 @@ class Player {
         this.width = width;
         this.height = this.width / this.srcFrameW * this.srcFrameH;
         this.moving = false;
+        this.speed = this.width / 3;
     }
 }
 
@@ -435,7 +446,11 @@ let actionBoxTxtSize, actionBoxTxtStyle, actionBoxTxtFontStyle;
 let displayQn = false;
 let qn = 'some question';
 let ansOpts = [];
-let qnX, qnY, qnOptW, qnOptH, optY;
+let ansOptIndex = 0;
+let ansOptSelected = '';
+let txtStyle = "Arial";
+let indexOfAns = -1;
+let qnX, qnY, qnBoxW, qnboxH, qnTxtX, qnTxtY, qnTxtSize, qnTxtFontStyle, qnOptW, qnOptH, optX, optY, optW, optH, optTxtSize, optTxtFontStyle, optTxtY;
 let cursorX, cursorY, cursorW, cursorH;
 
 function startAnimating(fps) {
@@ -453,6 +468,7 @@ function startAnimating(fps) {
     document.body.insertBefore(canvas, document.body.childNodes[0]);
     background.src = exploreMap.src;
     cursor.src = cursorImg.src;
+    touchArrow.src = touchArrowImg.src;
     if (screenOrientation == 'portrait-primary' || screenOrientation == 'portrait-secondary') {
         playerH = canvas.height * 0.05;
         playerW = playerH / 150 * 115;
@@ -521,6 +537,9 @@ function animate() {
                 }
             }
             player.draw(ctx);
+            if (isMobile && touchDetected) {
+                drawTouchArrow();
+            }
         }
         if (curGameState === gameStates[1]) {
             drawBackground();
@@ -540,6 +559,7 @@ function initiate_action_box() {
     curAction = actions[0]; // default action to point at first option
     // initiate Action box element dimentions
     actionBoxX = 0;
+    actionBoxW = canvas.width;
     actionBoxH = canvas.height * 0.3;
     actionBoxY = canvas.height - actionBoxH;
     actionOptionBoxH = actionBoxH;
@@ -547,15 +567,6 @@ function initiate_action_box() {
     actionBoxTxtSize = Math.floor(actionOptionBoxH * 0.5);
     actionBoxTxtStyle = "Arial";
     actionBoxTxtFontStyle = actionBoxTxtSize + "px " + actionBoxTxtStyle;
-    // initiate Qn Box within Action box
-    qnX = actionBoxX;
-    qnY = actionBoxY;
-    qnBoxW = actionBoxW;
-    qnboxH = actionBoxH / 3 * 2;
-    qnOptW = actionBoxW / 4;
-    qnOptH = actionBoxH / 3;
-    optY = qnX + qnboxH;
-    displayQn = false;
 
     // initiate cursor
     cursorX = actionBoxX + actionOptionBoxW / 2;
@@ -571,37 +582,42 @@ function drawActionsBox() {
 
     if (displayQn == true) {
         // draw question & options, place cursor on option 1
-        // atk selected or magic selected
         // draw question
         ctx.fillStyle = "black";
-        ctx.fillText(qn, qnX, qnY, qnBoxW);
+        ctx.font = qnTxtFontStyle
+        ctx.fillText(qn, qnTxtX, qnTxtY, qnBoxW);
 
         // draw options
         for (i = 0; i < ansOpts.length; i++) {
-            ctx.fillStyle = "green"; // "qnOptBgColor[i]"
-            // [qnX + qnOptW * 3, optY, qnOptW, qnOptH],
-            ctx.fillRect(qnX + qnOptW * i, optY, qnOptW, qnOptH);
-            ctx.beginPath();
+            if (i == ansOptIndex) {
+                ctx.fillStyle = "yellow";
+                ctx.fillRect(qnX + qnOptW * i, optY, qnOptW, qnOptH);
+                ctx.beginPath();
+            }
             ctx.lineWidth = "6";
             ctx.strokeStyle = "blue";
             ctx.rect(qnX + qnOptW * i, optY, qnOptW, qnOptH);
             ctx.stroke();
             ctx.fillStyle = "black";
-            ctx.fillText(ansOpts[i], qnX + qnOptW * i + qnOptW / 2.5, optY + actionBoxW);
+            ctx.font = optTxtFontStyle;
+            ctx.fillText(ansOpts[i], optX + optW / 2 + optW * i, optTxtY, optW);
+            ctx.stroke();
         }
     } else {
         // draw action buttons
         ctx.font = actionBoxTxtFontStyle;
         for (i = 0; i < actions.length; i++) {
-            ctx.fillStyle = "yellow";
-            ctx.fillRect(actionBoxX + actionOptionBoxW * i, actionBoxY, actionOptionBoxW, actionOptionBoxH);
-            ctx.beginPath();
+            if (i == curActionIndex) {
+                ctx.fillStyle = "yellow";
+                ctx.fillRect(actionBoxX + actionOptionBoxW * i, actionBoxY, actionOptionBoxW, actionOptionBoxH);
+                ctx.beginPath();
+            }
             ctx.lineWidth = "6";
             ctx.strokeStyle = "blue";
             ctx.rect(actionBoxX + actionOptionBoxW * i, actionBoxY, actionOptionBoxW, actionOptionBoxH);
             ctx.stroke();
             ctx.fillStyle = "black";
-            ctx.fillText(actions[i], actionBoxX + actionOptionBoxW * i, actionBoxY + actionBoxTxtSize);
+            ctx.fillText(actions[i], actionBoxX + actionOptionBoxW * 0.1 + actionOptionBoxW * i, actionBoxY + actionBoxTxtSize);
         }
     }
     //drawCursor();
@@ -657,6 +673,10 @@ function drawCursor() {
             cursorX = actionBoxX + actionOptionBoxW * 0.5 + actionOptionBoxW * curActionIndex;
             cursorY = actionBoxY + actionOptionBoxH / 2;
             cursorW = actionOptionBoxW / 3;
+        } else {
+            cursorX = qnOptW / 2 + qnOptW * ansOptIndex;
+            cursorY = optY + qnOptH / 2;
+            cursorW = qnOptW / 3;
             cursorH = cursorW / cursorImg.width * cursorImg.height;
         }
     }
@@ -691,8 +711,8 @@ function generateQn(opr, range) {
     var sNum = Math.ceil(Math.random() * range);
     var ansRange;
     qn = "How much is " + fNum + " " + opr + " " + sNum + "?";
-    opts = [];
-    var indexOfAns = Math.floor(Math.random() * 4);
+    ansOpts = [];
+    indexOfAns = Math.floor(Math.random() * 4);
 
     if (opr === "*") {
         ans = fNum * sNum;
@@ -714,13 +734,13 @@ function generateQn(opr, range) {
     //create 3 wrong options different from other options & add ans & wrong options in ops[];
     for (i = 0; i < 4; i++) {
         if (i == indexOfAns) {
-            opts.push(ans);
+            ansOpts.push(ans);
         } else {
             var opt = Math.ceil(Math.random() * ansRange);
-            while (opts.includes(opt) || opt == ans) {
+            while (ansOpts.includes(opt) || opt == ans) {
                 opt = Math.ceil(Math.random() * ansRange);
             }
-            opts.push(opt);
+            ansOpts.push(opt);
         }
     }
 }
@@ -752,7 +772,7 @@ window.addEventListener("keydown", function(e) {
         }
 
         if (displayQn == false) {
-            // cur displaying question
+            // cur displaying action options
             if (e.key == 'ArrowRight') {
                 if (curActionIndex == actions.length - 1) {
                     curActionIndex = 0;
@@ -773,8 +793,28 @@ window.addEventListener("keydown", function(e) {
                     // attack or magic is selected
                     // create the first qn
                     generateQn('+', 10);
+                    // initiate Qn Box within Action box
+                    qnX = actionBoxX;
+                    qnY = actionBoxY;
+                    qnBoxW = actionBoxW;
+                    qnBoxH = actionBoxH / 3 * 2;
+                    qnTxtSize = qnBoxH / 3 * 2;
+                    qnTxtFontStyle = qnTxtSize + "px " + txtStyle;
+                    qnTxtX = qnX;
+                    qnTxtY = qnY + qnTxtSize;
+                    qnOptW = actionBoxW / ansOpts.length;
+                    qnOptH = actionBoxH / 3;
+                    optX = actionBoxX;
+                    optY = qnY + qnBoxH;
+                    optW = actionBoxW / ansOpts.length;
+                    optH = actionBoxH / 3;
+                    optTxtSize = optH / 3 * 2;
+                    optTxtFontStyle = optTxtSize + "px " + txtStyle;
+                    optTxtY = optY + optTxtSize;
                     displayQn = true;
-                } else {
+                    ansOptIndex = 0;
+                }
+                if (curActionIndex == 2) {
                     // escape is selected
                     // cur displaying action selection, return to explore state
                     curGameState = gameStates[0];
@@ -784,7 +824,22 @@ window.addEventListener("keydown", function(e) {
                 }
             }
         } else {
-
+            // cur displaying qn and options
+            if (e.key == 'ArrowRight') {
+                if (ansOptIndex == ansOpts.length - 1) {
+                    ansOptIndex = 0;
+                } else {
+                    ansOptIndex += 1;
+                }
+            }
+            if (e.key == 'ArrowLeft') {
+                if (ansOptIndex == 0) {
+                    ansOptIndex = ansOpts.length - 1;
+                } else {
+                    ansOptIndex -= 1;
+                }
+            }
+            ansOptSelected = ansOpts[ansOptIndex];
         }
     }
 });
@@ -796,12 +851,22 @@ window.addEventListener("keyup", function(e) {
     }
 })
 
-var touch, firstTouchX, firstTouchY;
+var touch, firstTouchX, firstTouchY, touchMoveX, touchMoveY;
 var trackMove = false;
 
 function trackTouchMove(e) {
-    var touchMoveX = e.touches[0].clientX - firstTouchX;
-    var touchMoveY = e.touches[0].clientY - firstTouchY;
+    touchDetected = true;
+    touchMoveX = e.touches[0].clientX - firstTouchX;
+    touchMoveY = e.touches[0].clientY - firstTouchY;
+    touchArrowW = canvas.width * 0.1;
+    touchArrowH = touchArrowW / touchArrowImg.width * touchArrowImg.height;
+    if (touchMoveX > 0) {
+        touchRotateRadians = Math.atan(touchMoveY / touchMoveX);
+    } else {
+        touchRotateRadians = Math.atan(touchMoveY / touchMoveX) + 2;
+    }
+    console.log(touchRotateRadians);
+
     if (curGameState === gameStates[0] && trackMove == true) {
         player.moving = true;
         if (touchMoveX > 0) {
@@ -821,6 +886,14 @@ function trackTouchMove(e) {
             keys["ArrowDown"] = false;
         }
     }
+}
+
+function drawTouchArrow() {
+    ctx.translate(firstTouchX, firstTouchY);
+    ctx.rotate(touchRotateRadians);
+    ctx.drawImage(touchArrow, 0, 0, touchArrowW, touchArrowH);
+    ctx.rotate(-touchRotateRadians);
+    ctx.translate(-firstTouchX, -firstTouchY);
 }
 
 function trackMouseMove(e) {
@@ -849,6 +922,7 @@ function trackMouseMove(e) {
 }
 
 function disableMove(e) {
+    touchDetected = false;
     window.removeEventListener("mousemove", trackMouseMove);
     window.removeEventListener("touchmove", trackTouchMove);
     trackMove = false
@@ -884,6 +958,8 @@ window.addEventListener("touchstart", function(e) {
         window.addEventListener("touchmove", trackTouchMove);
         window.addEventListener("touchend", disableMove);
     }
+
+    if (curGameState === gameStates[1])
 }, { passive: false })
 
 function save_progress() {
