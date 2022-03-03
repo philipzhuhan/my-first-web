@@ -2,6 +2,12 @@ let vpWidth, vpHeight;
 var screenOrientation = (screen.orientation || {}).type || screen.mozOrientation || screen.msOrientation;
 let background = new Image();
 let cursor = new Image();
+let help = new Image();
+const helpImg = {
+    src: "static/img/red-question-mark.png",
+    width: 835,
+    height: 835,
+};
 // Map sources
 const exploreMap = {
     src: "static/img/stars-6170172_1280.png",
@@ -15,7 +21,7 @@ const cursorImg = {
     src: "static/img/sword-cursor.png",
     width: 540,
     height: 540,
-}
+};
 
 let touchArrow = new Image();
 const touchArrowImg = {
@@ -368,63 +374,65 @@ class Mob {
 
     move() {
         if (curGameState === gameStates[0]) {
-            if (this.direction === "down") {
-                if (this.y >= this.initY + this.moveLimit || this.y >= canvas.height - this.height) {
-                    // console.log("turn right");
-                    this.direction = "right";
-                    this.frameY = 1;
-                } else {
-                    this.y += this.speed;
-                    // console.log("move down");
+            if (this.moving == true) {
+                if (this.direction === "down") {
+                    if (this.y >= this.initY + this.moveLimit || this.y >= canvas.height - this.height) {
+                        // console.log("turn right");
+                        this.direction = "right";
+                        this.frameY = 1;
+                    } else {
+                        this.y += this.speed;
+                        // console.log("move down");
+                    }
+                }
+
+                if (this.direction === "right") {
+                    if (this.x >= this.initX + this.moveLimit || this.x >= canvas.width - this.width) {
+                        // console.log("turn up");
+                        this.direction = "up";
+                        this.frameY = 2;
+                    } else {
+                        this.x += this.speed;
+                        // console.log("move right");
+                    }
+                }
+
+                if (this.direction === "up") {
+                    if (this.y <= this.initY - this.moveLimit || this.y <= 0) {
+                        // console.log("turn left");
+                        this.direction = "left";
+                        this.frameY = 0;
+                    } else {
+                        this.y -= this.speed;
+                        // console.log("move up");
+                    }
+                }
+
+                if (this.direction === "left") {
+                    if (this.x < this.initX - this.moveLimit || this.x <= 0) {
+                        // console.log("turn down");
+                        this.direction = "down";
+                        this.frameY = 2;
+                    } else {
+                        this.x -= this.speed;
+                    }
                 }
             }
 
-            if (this.direction === "right") {
-                if (this.x >= this.initX + this.moveLimit || this.x >= canvas.width - this.width) {
-                    // console.log("turn up");
-                    this.direction = "up";
-                    this.frameY = 2;
-                } else {
-                    this.x += this.speed;
-                    // console.log("move right");
-                }
-            }
+            if (this.frameX < 7 && this.moving) this.frameX++
+                else this.frameX = 0;
 
-            if (this.direction === "up") {
-                if (this.y <= this.initY - this.moveLimit || this.y <= 0) {
-                    // console.log("turn left");
-                    this.direction = "left";
-                    this.frameY = 0;
-                } else {
-                    this.y -= this.speed;
-                    // console.log("move up");
-                }
-            }
-
-            if (this.direction === "left") {
-                if (this.x < this.initX - this.moveLimit || this.x <= 0) {
-                    // console.log("turn down");
-                    this.direction = "down";
-                    this.frameY = 2;
-                } else {
-                    this.x -= this.speed;
-                }
-            }
+            this.hpBarX = this.x;
+            this.hpBarY = this.y + this.height;
+            this.hpBarW = this.width;
+            this.hpBarH = this.height * 0.1;
+            this.curHpBarW = this.curHp / this.maxHp * this.hpBarW;
+            this.mpBarX = this.x;
+            this.mpBarY = this.hpBarY + this.hpBarH;
+            this.mpBarW = this.width;
+            this.mpBarH = this.height * 0.1;
+            this.curMpBarW = this.curMp / this.maxMp * this.mpBarW;
         }
-
-        if (this.frameX < 7 && this.moving) this.frameX++
-            else this.frameX = 0;
-
-        this.hpBarX = this.x;
-        this.hpBarY = this.y + this.height;
-        this.hpBarW = this.width;
-        this.hpBarH = this.height * 0.1;
-        this.curHpBarW = this.curHp / this.maxHp * this.hpBarW;
-        this.mpBarX = this.x;
-        this.mpBarY = this.hpBarY + this.hpBarH;
-        this.mpBarW = this.width;
-        this.mpBarH = this.height * 0.1;
-        this.curMpBarW = this.curMp / this.maxMp * this.mpBarW;
     }
 
     engageBattle(x, y, width) {
@@ -455,6 +463,7 @@ class Mob {
 let fps, fpsInterval, startTime, now, then, elapsed;
 let player;
 let playerX, playerY, playerW, playerH;
+let qnMarkX, qnMarkY, qnMarkW, qnMarkH;
 let gameStates = ['Explore', 'Battle'];
 let curGameState = gameStates[0];
 let keys = [];
@@ -480,6 +489,7 @@ let indexOfAns = -1;
 let qnX, qnY, qnBoxW, qnboxH, qnTxtX, qnTxtY, qnTxtSize, qnTxtFontStyle, qnOptW, qnOptH, optX, optY, optW, optH, optTxtSize, optTxtFontStyle, optTxtY;
 let cursorX, cursorY, cursorW, cursorH;
 let notifications = [];
+let displayHelp = false;
 
 function startAnimating(fps) {
     fpsInterval = 1000 / fps;
@@ -497,6 +507,7 @@ function startAnimating(fps) {
     background.src = exploreMap.src;
     cursor.src = cursorImg.src;
     touchArrow.src = touchArrowImg.src;
+    help.src = helpImg.src;
     if (screenOrientation == 'portrait-primary' || screenOrientation == 'portrait-secondary') {
         playerH = canvas.height * 0.05;
         playerW = playerH / 150 * 115;
@@ -513,6 +524,11 @@ function startAnimating(fps) {
     }
     // initialize mobs
     initMobs();
+    // initialize question mark
+    qnMarkX = canvas.width * 0.95;
+    qnMarkY = canvas.height * 0.05;
+    qnMarkW = canvas.width * 0.03;
+    qnMarkH = canvas.height * 0.03;
     // adjustView();
     // map.width = vpWidth;
     // map.height = vpHeight;
@@ -578,7 +594,42 @@ function animate() {
             player.draw(ctx);
             battleMob.draw(ctx);
         }
+        drawHelp();
+    }
+}
 
+function drawHelp() {
+    var txtSize, txtStyle;
+    if (displayHelp == false) {
+        console.log('draw ?');
+        ctx.drawImage(help, qnMarkX, qnMarkY, qnMarkW, qnMarkH);
+    } else {
+        if (isMobile) {
+            // display touch help on mobile
+        } else {
+            var helpTxt = [];
+            if (curGameState === gameStates[0]) {
+                helpTxt.push("Press H for help;");
+                helpTxt.push("Press Arrow Key to move character;");
+                helpTxt.push("Press H for help;");
+                helpTxt.push("Press Arrow Key to move character;");
+
+            }
+            if (curGameState === gameStates[1]) {
+                helpTxt.push("Press LEFT ARROW / RIGHT ARROW to choose;");
+                helpTxt.push("Press SPACE or ENTER to confirm selection.");
+            }
+            txtSize = canvas.height * 0.05;
+            txtStyle = "Arial";
+            ctx.fillStyle = "white";
+            ctx.fillRect(canvas.width * 0.02, canvas.height * 0.01, canvas.width * 0.96, canvas.height * 0.96);
+
+            ctx.fillStyle = "black";
+            ctx.font = txtSize + "px " + txtStyle;
+            for (i = 0; i < helpTxt.length; i++) {
+                ctx.fillText(helpTxt[i], canvas.width * 0.02 + txtSize, canvas.height * 0.05 + txtSize * i, canvas.width * 0.85);
+            }
+        }
     }
 }
 
@@ -688,6 +739,11 @@ function adjustView() {
             mobs[i].scale(factor);
         }
     }
+    // resize question mark
+    qnMarkX = canvas.width * 0.95;
+    qnMarkY = canvas.height * 0.05;
+    qnMarkW = canvas.width * 0.03;
+    qnMarkH = canvas.height * 0.03;
 }
 
 function drawBackground() {
@@ -727,6 +783,7 @@ function initMobs() {
             mob = new Mob(mobX, mobY, mobW, initDir, lvl);
         }
         mobs.push(mob);
+        //console.log(mobs);
     }
 }
 
@@ -817,6 +874,21 @@ function magicMob(mob, isCritical) {
 window.addEventListener("keydown", function(e) {
     keys[e.key] = true;
     // console.log(e.key);
+    if (e.key == "h" || e.key == 'H') {
+        if (displayHelp == true) {
+            displayHelp = false;
+            for (i = 0; i < mobs.length; i++) {
+                mobs[i].moving = true;
+            }
+            console.log('mob moving');
+        } else {
+            displayHelp = true;
+            for (i = 0; i < mobs.length; i++) {
+                mobs[i].moving = false;
+            }
+            console.log('mob NOT moving');
+        }
+    }
     if (curGameState === gameStates[0]) {
         player.moving = true;
         if (e.key == "=") {
