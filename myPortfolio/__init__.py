@@ -9,7 +9,13 @@ from flask_admin.contrib.sqla import ModelView
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY")
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")
+### for local deploy
+# app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")
+### END for local deploy
+
+### for deploy to Heroku
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL").replace("postgres://", "postgresql://", 1)
+### END for deploy to Heroku
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 login_manager = LoginManager(app)
