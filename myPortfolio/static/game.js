@@ -213,6 +213,33 @@ class Player {
         this.moving = false;
         this.speed = this.width / 3;
     }
+
+    levelUp() {
+        this.lvl += 1;
+        this.maxHp = this.lvl * 100 + 50;
+        this.maxMp = this.lvl * 50 + 50;
+        this.curHp = this.maxHp;
+        this.curMp = this.maxMp;
+        this.maxExp = this.lvl * 50 + 10;
+        this.atk = this.lvl * 30 + 20;
+        this.def = this.lvl * 15 + 15;
+        console.log('Player level up to: ' + this.lvl);
+    }
+
+    addExp(exp) {
+        this.curExp += exp;
+        while (this.curExp >= this.maxExp) {
+            this.curExp -= this.maxExp;
+            this.levelUp();
+        }
+    }
+
+    killed() {
+        this.curExp -= 10;
+        if (this.curExp < 0) {
+            this.curExp = 0
+        }
+    }
 }
 
 class Mob {
@@ -452,6 +479,7 @@ let txtStyle = "Arial";
 let indexOfAns = -1;
 let qnX, qnY, qnBoxW, qnboxH, qnTxtX, qnTxtY, qnTxtSize, qnTxtFontStyle, qnOptW, qnOptH, optX, optY, optW, optH, optTxtSize, optTxtFontStyle, optTxtY;
 let cursorX, cursorY, cursorW, cursorH;
+let notifications = [];
 
 function startAnimating(fps) {
     fpsInterval = 1000 / fps;
@@ -617,7 +645,7 @@ function drawActionsBox() {
             ctx.rect(actionBoxX + actionOptionBoxW * i, actionBoxY, actionOptionBoxW, actionOptionBoxH);
             ctx.stroke();
             ctx.fillStyle = "black";
-            ctx.fillText(actions[i], actionBoxX + actionOptionBoxW * 0.1 + actionOptionBoxW * i, actionBoxY + actionBoxTxtSize);
+            ctx.fillText(actions[i], actionBoxX + actionOptionBoxW * 0.1 + actionOptionBoxW * i, actionBoxY + actionBoxTxtSize, actionOptionBoxW);
         }
     }
     //drawCursor();
@@ -688,7 +716,7 @@ function initMobs() {
         var mobX = Math.random() * (canvas.width * 0.95); //size of mob should be 5% of canvas size
         var mobY = Math.random() * (canvas.height * 0.95); //size of mob should be 5% of canvas size
         var initDir = mobDirs[Math.floor(Math.random() * mobDirs.length)];
-        var lvl = Math.ceil(Math.random() * 5) + 5 * (mapLvl - 1);
+        var lvl = Math.ceil(Math.random() * 3) + 3 * (mapLvl - 1);
         var mobW = canvas.width * 0.05;
         var mob = new Mob(mobX, mobY, mobW, initDir, lvl);
         while (distance(player, mob) <= player.width / 2 + mob.width / 2) {
@@ -743,6 +771,47 @@ function generateQn(opr, range) {
             ansOpts.push(opt);
         }
     }
+    console.log('correct ans index: ' + indexOfAns);
+}
+
+function attackMob(mob, isCritical) {
+    var dmg;
+    if (isCritical == 'critical') {
+        dmg = (player.atk - mob.def) * 1.1;
+    }
+    if (isCritical == 'normal') {
+        mob.curHp -= player.atk - mob.def;
+    }
+    if (dmg < 0) {
+        dmg = 0;
+    }
+    mob.curHp -= dmg;
+    if (mob.curHp <= 0) {
+        // battleMob is killed
+        var exp = 10; //// temperary set to 10 for now, need to implement variable based on level difference.
+        console.log('battlemob is dead');
+        if (mobs.length == 0) {
+            initMobs();
+        }
+        player.addExp(exp);
+        player.disEngageBattle(canvas.width * 0.05);
+        displayQn = false;
+        curGameState = gameStates[0];
+    }
+}
+
+function magicMob(mob, isCritical) {
+    if (isCritical == 'critical') {
+        mob.curHp -= (player.atk - mob.def) * 1.1;
+    }
+    if (isCritical == 'normal') {
+        mob.curHp -= player.atk - mob.def;
+    }
+
+    if (mob.curHp <= 0) {
+        player.addExp(exp);
+        player.disEngageBattle(canvas.width * 0.05);
+    }
 }
 
 window.addEventListener("keydown", function(e) {
@@ -791,28 +860,7 @@ window.addEventListener("keydown", function(e) {
             if (e.key == ' ' || e.key == 'Enter') {
                 if (curActionIndex == 0 || curActionIndex == 1) {
                     // attack or magic is selected
-                    // create the first qn
-                    generateQn('+', 10);
-                    // initiate Qn Box within Action box
-                    qnX = actionBoxX;
-                    qnY = actionBoxY;
-                    qnBoxW = actionBoxW;
-                    qnBoxH = actionBoxH / 3 * 2;
-                    qnTxtSize = qnBoxH / 3 * 2;
-                    qnTxtFontStyle = qnTxtSize + "px " + txtStyle;
-                    qnTxtX = qnX;
-                    qnTxtY = qnY + qnTxtSize;
-                    qnOptW = actionBoxW / ansOpts.length;
-                    qnOptH = actionBoxH / 3;
-                    optX = actionBoxX;
-                    optY = qnY + qnBoxH;
-                    optW = actionBoxW / ansOpts.length;
-                    optH = actionBoxH / 3;
-                    optTxtSize = optH / 3 * 2;
-                    optTxtFontStyle = optTxtSize + "px " + txtStyle;
-                    optTxtY = optY + optTxtSize;
-                    displayQn = true;
-                    ansOptIndex = 0;
+                    createQnBox();
                 }
                 if (curActionIndex == 2) {
                     // escape is selected
@@ -840,9 +888,53 @@ window.addEventListener("keydown", function(e) {
                 }
             }
             ansOptSelected = ansOpts[ansOptIndex];
+            if (e.key == ' ' || e.key == 'Enter') {
+                // selected the option
+                // validate answer option vs correct index
+                if (curAction == actions[0]) {
+                    if (ansOptIndex == indexOfAns) {
+                        attackMob(battleMob, 'critical');
+                    } else {
+                        attackMob(battleMob, 'normal');
+                    }
+                }
+                if (curAction == actions[1]) {
+                    if (ansOptIndex == indexOfAns) {
+                        magicMob(player, battleMob, 'critical');
+                    } else {
+                        magicMob(player, battleMob, 'normal');
+                    }
+                }
+                displayQn = false;
+            }
         }
     }
 });
+
+function createQnBox() {
+    // create the first qn
+    generateQn('+', 10);
+    // initiate Qn Box within Action box
+    qnX = actionBoxX;
+    qnY = actionBoxY;
+    qnBoxW = actionBoxW;
+    qnBoxH = actionBoxH / 3 * 2;
+    qnTxtSize = qnBoxH / 3 * 2;
+    qnTxtFontStyle = qnTxtSize + "px " + txtStyle;
+    qnTxtX = qnX;
+    qnTxtY = qnY + qnTxtSize;
+    qnOptW = actionBoxW / ansOpts.length;
+    qnOptH = actionBoxH / 3;
+    optX = actionBoxX;
+    optY = qnY + qnBoxH;
+    optW = actionBoxW / ansOpts.length;
+    optH = actionBoxH / 3;
+    optTxtSize = optH / 3 * 2;
+    optTxtFontStyle = optTxtSize + "px " + txtStyle;
+    optTxtY = optY + optTxtSize;
+    displayQn = true;
+    ansOptIndex = 0;
+}
 
 window.addEventListener("keyup", function(e) {
     keys[e.key] = false;
@@ -865,7 +957,6 @@ function trackTouchMove(e) {
     } else {
         touchRotateRadians = Math.atan(touchMoveY / touchMoveX) + 2;
     }
-    console.log(touchRotateRadians);
 
     if (curGameState === gameStates[0] && trackMove == true) {
         player.moving = true;
@@ -957,6 +1048,77 @@ window.addEventListener("touchstart", function(e) {
         trackMove = true;
         window.addEventListener("touchmove", trackTouchMove);
         window.addEventListener("touchend", disableMove);
+    }
+    if (curGameState === gameStates[1]) {
+        // Battle state
+        if (displayQn === true) {
+            // answer option selection
+            if (firstTouchY > optY) {
+                // touch within valid ans option select Y range
+                if (firstTouchX < qnOptW) {
+                    // first option
+                    ansOptIndex = 0;
+                }
+                if (firstTouchX >= qnOptW && firstTouchX < qnOptW * 2) {
+                    // second option
+                    ansOptIndex = 1;
+                }
+                if (firstTouchX >= qnOptW * 2 && firstTouchX < qnOptW * 3) {
+                    // second option
+                    ansOptIndex = 2;
+                }
+                if (firstTouchX >= qnOptW * 3 && firstTouchX < qnOptW * 4) {
+                    // second option
+                    ansOptIndex = 3;
+                }
+                console.log('answer option index selected: ' + ansOptIndex);
+                ansOptSelected = ansOpts[ansOptIndex];
+                // validate answer option vs correct index
+                if (curAction == actions[0]) {
+                    if (ansOptIndex == indexOfAns) {
+                        console.log('critical');
+                        attackMob(battleMob, 'critical');
+                    } else {
+                        attackMob(battleMob, 'normal');
+                    }
+                }
+                if (curAction == actions[1]) {
+                    if (ansOptIndex == indexOfAns) {
+                        console.log('critical');
+                        magicMob(player, battleMob, 'critical');
+                    } else {
+                        magicMob(player, battleMob, 'normal');
+                    }
+                }
+                displayQn = false;
+            }
+        } else {
+            // action option selection
+            if (firstTouchY > actionBoxY) {
+                // within valid action option select Y range
+                if (firstTouchX < actionOptionBoxW) {
+                    // Attack is clicked
+                    curActionIndex = 0;
+                    displayQn = true;
+                    createQnBox();
+                }
+                if (firstTouchX >= actionOptionBoxW && firstTouchX < actionOptionBoxW * 2) {
+                    // Magic is clicked
+                    curActionIndex = 1;
+                    displayQn = true;
+                    createQnBox();
+                }
+                if (firstTouchX >= actionOptionBoxW * 2) {
+                    // escape is selected
+                    // cur displaying action selection, return to explore state
+                    curGameState = gameStates[0];
+                    player.disEngageBattle(canvas.width * 0.05);
+                    battleMob.disEngageBattle(canvas.width * 0.05);
+                    mobs.push(battleMob);
+                }
+                curAction = actions[curActionIndex];
+            }
+        }
     }
 }, { passive: false })
 
