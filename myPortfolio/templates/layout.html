@@ -32,6 +32,11 @@
               <li class="nav-item">
                 <a class="nav-link" href="{{ url_for('jsGame') }}">JS Game</a>
               </li>
+              {% if current_user.role=='admin' %}
+                <li class="nav-item">
+                  <a class="nav-link" href="{{ url_for('add_question') }}">Add Question</a>
+                </li>
+              {% endif %}
             </ul>
             <form class="d-flex">
               <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">

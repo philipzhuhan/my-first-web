@@ -8,6 +8,17 @@ const helpImg = {
     width: 835,
     height: 835,
 };
+// let redCross = new Image();
+const redCrossImg1 = {
+    src: "static/img/red-cross.png",
+    width: 645,
+    height: 644,
+};
+// const redCrossImg2 = {
+//     src: "static/img/Red-cross-mark-icon.png",
+//     width: 0,
+//     height: 0,
+// };
 // Map sources
 const exploreMap = {
     src: "static/img/stars-6170172_1280.png",
@@ -35,6 +46,8 @@ let touchArrowW, touchArrowH;
 
 let canvas, ctx;
 const isMobile = ('ontouchstart' in document.documentElement && navigator.userAgent.match(/Mobi/));
+
+
 
 class Player {
     constructor(x, y, width, height) {
@@ -377,40 +390,33 @@ class Mob {
             if (this.moving == true) {
                 if (this.direction === "down") {
                     if (this.y >= this.initY + this.moveLimit || this.y >= canvas.height - this.height) {
-                        // console.log("turn right");
                         this.direction = "right";
                         this.frameY = 1;
                     } else {
                         this.y += this.speed;
-                        // console.log("move down");
                     }
                 }
 
                 if (this.direction === "right") {
                     if (this.x >= this.initX + this.moveLimit || this.x >= canvas.width - this.width) {
-                        // console.log("turn up");
                         this.direction = "up";
                         this.frameY = 2;
                     } else {
                         this.x += this.speed;
-                        // console.log("move right");
                     }
                 }
 
                 if (this.direction === "up") {
                     if (this.y <= this.initY - this.moveLimit || this.y <= 0) {
-                        // console.log("turn left");
                         this.direction = "left";
                         this.frameY = 0;
                     } else {
                         this.y -= this.speed;
-                        // console.log("move up");
                     }
                 }
 
                 if (this.direction === "left") {
                     if (this.x < this.initX - this.moveLimit || this.x <= 0) {
-                        // console.log("turn down");
                         this.direction = "down";
                         this.frameY = 2;
                     } else {
@@ -484,10 +490,23 @@ let qn = 'some question';
 let ansOpts = [];
 let ansOptIndex = 0;
 let ansOptSelected = '';
+let ans;
 let txtStyle = "Arial";
 let indexOfAns = -1;
-let qnX, qnY, qnBoxW, qnboxH, qnTxtX, qnTxtY, qnTxtSize, qnTxtFontStyle, qnOptW, qnOptH, optX, optY, optW, optH, optTxtSize, optTxtFontStyle, optTxtY;
+let qnBoxX, qnBoxY, qnBoxW, qnBoxH, qnTxtX, qnTxtY, qnTxtSize, qnTxtFontStyle, optX, optY, optW, optH, optTxtSize, optTxtFontStyle, optTxtX, optTxtY;
 let cursorX, cursorY, cursorW, cursorH;
+
+let ops = ['+', 'count'];
+let op;
+// questions resources
+let qnImg = new Image()
+const cupcakeImg = {
+    name: 'cupcake',
+    src: "static/img/questions/cupcake.png",
+    width: 512,
+    height: 512,
+}
+
 let notifications = [];
 let displayHelp = false;
 
@@ -508,6 +527,7 @@ function startAnimating(fps) {
     cursor.src = cursorImg.src;
     touchArrow.src = touchArrowImg.src;
     help.src = helpImg.src;
+    // redCross.src = redCrossImg1.src;
     if (screenOrientation == 'portrait-primary' || screenOrientation == 'portrait-secondary') {
         playerH = canvas.height * 0.05;
         playerW = playerH / 150 * 115;
@@ -551,11 +571,11 @@ function animate() {
         // Get ready for next frame by setting then=now, but also adjust for your
         // specified fpsInterval not being a multiple of RAF's interval (16.7ms)
         then = now - (elapsed % fpsInterval);
-        // console.log(screenOrientation);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         adjustView();
         ctx.imageSmoothingEnabled = false;
         if (curGameState === gameStates[0]) {
+            // explore state
             player.move();
             drawBackground();
             for (i = 0; i < mobs.length; i++) {
@@ -588,7 +608,9 @@ function animate() {
         if (curGameState === gameStates[1]) {
             drawBackground();
             drawActionsBox();
-            drawCursor();
+            if (!isMobile) {
+                drawCursor();
+            }
             player.move();
             battleMob.move();
             player.draw(ctx);
@@ -601,41 +623,55 @@ function animate() {
 function drawHelp() {
     var txtSize, txtStyle;
     if (displayHelp == false) {
-        console.log('draw ?');
+        // console.log('draw ?');
+        help.src = helpImg.src;
         ctx.drawImage(help, qnMarkX, qnMarkY, qnMarkW, qnMarkH);
     } else {
+        help.src = redCrossImg1.src;
+        var helpTxt = [];
         if (isMobile) {
             // display touch help on mobile
-        } else {
-            var helpTxt = [];
             if (curGameState === gameStates[0]) {
                 helpTxt.push("Press H for help;");
                 helpTxt.push("Press Arrow Key to move character;");
                 helpTxt.push("Press H for help;");
                 helpTxt.push("Press Arrow Key to move character;");
-
             }
             if (curGameState === gameStates[1]) {
                 helpTxt.push("Press LEFT ARROW / RIGHT ARROW to choose;");
                 helpTxt.push("Press SPACE or ENTER to confirm selection.");
             }
-            txtSize = canvas.height * 0.05;
-            txtStyle = "Arial";
-            ctx.fillStyle = "white";
-            ctx.fillRect(canvas.width * 0.02, canvas.height * 0.01, canvas.width * 0.96, canvas.height * 0.96);
-
-            ctx.fillStyle = "black";
-            ctx.font = txtSize + "px " + txtStyle;
-            for (i = 0; i < helpTxt.length; i++) {
-                ctx.fillText(helpTxt[i], canvas.width * 0.02 + txtSize, canvas.height * 0.05 + txtSize * i, canvas.width * 0.85);
+        } else {
+            if (curGameState === gameStates[0]) {
+                helpTxt.push("Press H for help;");
+                helpTxt.push("Press Arrow Key to move character;");
+                helpTxt.push("Press H for help;");
+                helpTxt.push("Press Arrow Key to move character;");
+            }
+            if (curGameState === gameStates[1]) {
+                helpTxt.push("Press LEFT ARROW / RIGHT ARROW to choose;");
+                helpTxt.push("Press SPACE or ENTER to confirm selection.");
             }
         }
+        txtSize = canvas.height * 0.05;
+        txtStyle = "Arial";
+        ctx.fillStyle = "white";
+        ctx.fillRect(canvas.width * 0.02, canvas.height * 0.01, canvas.width * 0.96, canvas.height * 0.96);
+
+        ctx.fillStyle = "black";
+        ctx.font = txtSize + "px " + txtStyle;
+        for (i = 0; i < helpTxt.length; i++) {
+            ctx.fillText(helpTxt[i], canvas.width * 0.02 + txtSize, canvas.height * 0.05 + txtSize * i, canvas.width * 0.85);
+        }
+        ctx.drawImage(help, qnMarkX, qnMarkY, qnMarkW, qnMarkH);
     }
 }
 
 function initiate_action_box() {
+    console.log('initiate action box');
     displayQn = false; // display action choices, not display questions
-    curAction = actions[0]; // default action to point at first option
+    curActionIndex = 0;
+    curAction = actions[curActionIndex]; // default action to point at first option
     // initiate Action box element dimentions
     actionBoxX = 0;
     actionBoxW = canvas.width;
@@ -666,22 +702,34 @@ function drawActionsBox() {
         ctx.font = qnTxtFontStyle
         ctx.fillText(qn, qnTxtX, qnTxtY, qnBoxW);
 
-        // draw options
+        if (op == 'count') {
+            // draw item * count times at x: qnboxX, qnboxY + qnboxH, qnboxW, actionboxH / 3 * 2;
+            var drawItemW = qnBoxW / ans;
+            var drawItemH = drawItemW / cupcakeImg.width * cupcakeImg.height;
+            if (drawItemH >= actionBoxH / 3 * 2) {
+                drawItemH = actionBoxH * 0.8;
+                drawItemW = drawItemH / cupcakeImg.height * cupcakeImg.width;
+            }
+            for (i = 0; i < ans; i++) {
+                ctx.drawImage(qnImg, actionBoxX + drawItemW * i, qnBoxY + qnBoxH, drawItemW, drawItemH);
+            }
+        }
         for (i = 0; i < ansOpts.length; i++) {
             if (i == ansOptIndex) {
                 ctx.fillStyle = "yellow";
-                ctx.fillRect(qnX + qnOptW * i, optY, qnOptW, qnOptH);
+                ctx.fillRect(optX, optY + optH * i, optW, optH);
                 ctx.beginPath();
             }
             ctx.lineWidth = "6";
             ctx.strokeStyle = "blue";
-            ctx.rect(qnX + qnOptW * i, optY, qnOptW, qnOptH);
+            ctx.rect(optX, optY + optH * i, optW, optH);
             ctx.stroke();
             ctx.fillStyle = "black";
             ctx.font = optTxtFontStyle;
-            ctx.fillText(ansOpts[i], optX + optW / 2 + optW * i, optTxtY, optW);
+            ctx.fillText(ansOpts[i], optX + optW / 2, optTxtY + optH * i, optW);
             ctx.stroke();
         }
+        // }
     } else {
         // draw action buttons
         ctx.font = actionBoxTxtFontStyle;
@@ -691,7 +739,7 @@ function drawActionsBox() {
                 ctx.fillRect(actionBoxX + actionOptionBoxW * i, actionBoxY, actionOptionBoxW, actionOptionBoxH);
                 ctx.beginPath();
             }
-            ctx.lineWidth = "6";
+            ctx.lineWidth = "1";
             ctx.strokeStyle = "blue";
             ctx.rect(actionBoxX + actionOptionBoxW * i, actionBoxY, actionOptionBoxW, actionOptionBoxH);
             ctx.stroke();
@@ -699,7 +747,6 @@ function drawActionsBox() {
             ctx.fillText(actions[i], actionBoxX + actionOptionBoxW * 0.1 + actionOptionBoxW * i, actionBoxY + actionBoxTxtSize, actionOptionBoxW);
         }
     }
-    //drawCursor();
 }
 
 function adjustView() {
@@ -719,9 +766,27 @@ function adjustView() {
             for (const mob in mobs) {
                 mob.changeOrientation(newOrientation, originW, originH, canvas.width, canvas.height);
             }
-
             screenOrientation = newOrientation;
-        } else {}
+        } else {
+            mapW = exploreMap.width;
+            mapH = exploreMap.height;
+            // canvas should be mapW * mapH scale
+            if (vpWidth / vpHeight <= mapW / mapH) {
+                canvas.width = vpWidth;
+                canvas.height = canvas.width * mapH / mapW;
+            } else {
+                canvas.height = vpHeight;
+                canvas.width = canvas.height * mapW / mapH;
+            }
+            var factor = canvas.width / originW;
+            player.scale(factor);
+            for (i = 0; i < mobs.length; i++) {
+                mobs[i].scale(factor);
+            }
+            if (curGameState == gameStates[1]) {
+                battleMob.scale(factor);
+            }
+        }
     } else {
         mapW = exploreMap.width;
         mapH = exploreMap.height;
@@ -737,6 +802,9 @@ function adjustView() {
         player.scale(factor);
         for (i = 0; i < mobs.length; i++) {
             mobs[i].scale(factor);
+        }
+        if (curGameState == gameStates[1]) {
+            battleMob.scale(factor);
         }
     }
     // resize question mark
@@ -758,9 +826,9 @@ function drawCursor() {
             cursorY = actionBoxY + actionOptionBoxH / 2;
             cursorW = actionOptionBoxW / 3;
         } else {
-            cursorX = qnOptW / 2 + qnOptW * ansOptIndex;
-            cursorY = optY + qnOptH / 2;
-            cursorW = qnOptW / 3;
+            cursorX = optW / 2 + optW * ansOptIndex;
+            cursorY = optY + optH / 2;
+            cursorW = optW / 3;
             cursorH = cursorW / cursorImg.width * cursorImg.height;
         }
     }
@@ -783,7 +851,6 @@ function initMobs() {
             mob = new Mob(mobX, mobY, mobW, initDir, lvl);
         }
         mobs.push(mob);
-        //console.log(mobs);
     }
 }
 
@@ -792,30 +859,24 @@ function distance(objA, objB) {
 }
 
 function generateQn(opr, range) {
-    var fNum = Math.ceil(Math.random() * range);
-    var sNum = Math.ceil(Math.random() * range);
     var ansRange;
-    qn = "How much is " + fNum + " " + opr + " " + sNum + "?";
     ansOpts = [];
     indexOfAns = Math.floor(Math.random() * 4);
-
-    if (opr === "*") {
-        ans = fNum * sNum;
-        ansRange = range * range;
-    }
-    if (opr === "/") {
-        ans = fNum / sNum;
-        ansRange = range;
-    }
-    if (opr === "+") {
+    if (opr == '+') {
+        var fNum = Math.ceil(Math.random() * range);
+        var sNum = Math.ceil(Math.random() * range);
+        qn = "How much is " + fNum + " " + opr + " " + sNum + "?";
         ans = fNum + sNum;
         ansRange = range + range;
     }
-    if (opr === "-") {
-        ans = fNum - sNum;
+
+    if (opr === "count") {
+        var count = Math.ceil(Math.random() * range);
+        qnImg.src = cupcakeImg.src;
+        qn = 'How many ' + cupcakeImg.name + ' do you see below?';
+        ans = count;
         ansRange = range;
     }
-
     //create 3 wrong options different from other options & add ans & wrong options in ops[];
     for (i = 0; i < 4; i++) {
         if (i == indexOfAns) {
@@ -828,19 +889,42 @@ function generateQn(opr, range) {
             ansOpts.push(opt);
         }
     }
-    console.log('correct ans index: ' + indexOfAns);
+    console.log('generated new question with operation: ' + op + ', and answer: ' + ans + ' at index: ' + indexOfAns);
+    console.log('answers generated: ' + ans);
+}
+
+function createQnBox() {
+    // create the qn
+    op = ops[Math.floor(Math.random() * ops.length)];
+    generateQn(op, 10);
+    qnBoxX = actionBoxX;
+    qnBoxY = actionBoxY;
+    qnBoxW = actionBoxW / 3 * 2;
+    qnBoxH = actionBoxH / 3;
+    qnTxtSize = qnBoxH / 3;
+    qnTxtFontStyle = qnTxtSize + "px " + txtStyle;
+    qnTxtX = qnBoxX + qnTxtSize;
+    qnTxtY = qnBoxY + qnTxtSize;
+    optX = qnBoxX + qnBoxW;
+    optY = qnBoxY;
+    optW = qnBoxW / 2;
+    optH = actionBoxH / 4;
+    optTxtSize = optH / 3;
+    optTxtFontStyle = optTxtSize + "px " + txtStyle;
+    optTxtY = optY + optTxtSize * 2;
+    // }
+    displayQn = true;
+    ansOptIndex = 0;
 }
 
 function attackMob(mob, isCritical) {
-    var dmg;
-    if (isCritical == 'critical') {
-        dmg = (player.atk - mob.def) * 1.1;
-    }
-    if (isCritical == 'normal') {
-        mob.curHp -= player.atk - mob.def;
+    var dmg = player.atk - mob.def;
+    if (isCritical) {
+        dmg *= 1.5;
     }
     if (dmg < 0) {
         dmg = 0;
+        console.log('dmg is too low');
     }
     mob.curHp -= dmg;
     if (mob.curHp <= 0) {
@@ -858,41 +942,41 @@ function attackMob(mob, isCritical) {
 }
 
 function magicMob(mob, isCritical) {
-    if (isCritical == 'critical') {
-        mob.curHp -= (player.atk - mob.def) * 1.1;
+    var dmg = player.atk - mob.def;
+    if (isCritical) {
+        dmg *= 1.5;
     }
-    if (isCritical == 'normal') {
-        mob.curHp -= player.atk - mob.def;
+    if (dmg < 0) {
+        dmg = 0;
+        console.log('dmg is too low');
     }
-
+    mob.curHp -= dmg;
     if (mob.curHp <= 0) {
         player.addExp(exp);
         player.disEngageBattle(canvas.width * 0.05);
+        displayQn = false;
+        curGameState = gameStates[0];
     }
 }
 
 window.addEventListener("keydown", function(e) {
     keys[e.key] = true;
-    // console.log(e.key);
     if (e.key == "h" || e.key == 'H') {
         if (displayHelp == true) {
             displayHelp = false;
             for (i = 0; i < mobs.length; i++) {
                 mobs[i].moving = true;
             }
-            console.log('mob moving');
         } else {
             displayHelp = true;
             for (i = 0; i < mobs.length; i++) {
                 mobs[i].moving = false;
             }
-            console.log('mob NOT moving');
         }
     }
     if (curGameState === gameStates[0]) {
         player.moving = true;
         if (e.key == "=") {
-            console.log(player.id);
             save_character(player);
             // retrieve_characters();
         }
@@ -983,30 +1067,6 @@ window.addEventListener("keydown", function(e) {
     }
 });
 
-function createQnBox() {
-    // create the first qn
-    generateQn('+', 10);
-    // initiate Qn Box within Action box
-    qnX = actionBoxX;
-    qnY = actionBoxY;
-    qnBoxW = actionBoxW;
-    qnBoxH = actionBoxH / 3 * 2;
-    qnTxtSize = qnBoxH / 3 * 2;
-    qnTxtFontStyle = qnTxtSize + "px " + txtStyle;
-    qnTxtX = qnX;
-    qnTxtY = qnY + qnTxtSize;
-    qnOptW = actionBoxW / ansOpts.length;
-    qnOptH = actionBoxH / 3;
-    optX = actionBoxX;
-    optY = qnY + qnBoxH;
-    optW = actionBoxW / ansOpts.length;
-    optH = actionBoxH / 3;
-    optTxtSize = optH / 3 * 2;
-    optTxtFontStyle = optTxtSize + "px " + txtStyle;
-    optTxtY = optY + optTxtSize;
-    displayQn = true;
-    ansOptIndex = 0;
-}
 
 window.addEventListener("keyup", function(e) {
     keys[e.key] = false;
@@ -1115,8 +1175,21 @@ window.addEventListener("touchstart", function(e) {
     // console.log(touch.pageX + ' / ' + touch.pageY);
     firstTouchX = touch.clientX;
     firstTouchY = touch.clientY;
+    if (firstTouchX > qnMarkX && firstTouchX < qnMarkX + qnMarkW && firstTouchY > qnMarkY && qnMarkY < qnMarkY + qnMarkH) {
+        // click is in the help icon area
+        if (displayHelp == true) {
+            displayHelp = false;
+            for (i = 0; i < mobs.length; i++) {
+                mobs[i].moving = true;
+            }
+        } else {
+            displayHelp = true;
+            for (i = 0; i < mobs.length; i++) {
+                mobs[i].moving = false;
+            }
+        }
+    }
     if (curGameState === gameStates[0]) {
-        // console.log("touch start");
         trackMove = true;
         window.addEventListener("touchmove", trackTouchMove);
         window.addEventListener("touchend", disableMove);
@@ -1127,19 +1200,19 @@ window.addEventListener("touchstart", function(e) {
             // answer option selection
             if (firstTouchY > optY) {
                 // touch within valid ans option select Y range
-                if (firstTouchX < qnOptW) {
+                if (firstTouchX < optW) {
                     // first option
                     ansOptIndex = 0;
                 }
-                if (firstTouchX >= qnOptW && firstTouchX < qnOptW * 2) {
+                if (firstTouchX >= optW && firstTouchX < optW * 2) {
                     // second option
                     ansOptIndex = 1;
                 }
-                if (firstTouchX >= qnOptW * 2 && firstTouchX < qnOptW * 3) {
+                if (firstTouchX >= optW * 2 && firstTouchX < optW * 3) {
                     // second option
                     ansOptIndex = 2;
                 }
-                if (firstTouchX >= qnOptW * 3 && firstTouchX < qnOptW * 4) {
+                if (firstTouchX >= optW * 3 && firstTouchX < optW * 4) {
                     // second option
                     ansOptIndex = 3;
                 }
@@ -1165,20 +1238,23 @@ window.addEventListener("touchstart", function(e) {
                 displayQn = false;
             }
         } else {
+            console.log("click in action scene");
             // action option selection
             if (firstTouchY > actionBoxY) {
                 // within valid action option select Y range
                 if (firstTouchX < actionOptionBoxW) {
                     // Attack is clicked
                     curActionIndex = 0;
-                    displayQn = true;
+                    curAction = actions[curActionIndex];
                     createQnBox();
+                    displayQn = true;
                 }
                 if (firstTouchX >= actionOptionBoxW && firstTouchX < actionOptionBoxW * 2) {
                     // Magic is clicked
                     curActionIndex = 1;
-                    displayQn = true;
+                    curAction = actions[curActionIndex];
                     createQnBox();
+                    displayQn = true;
                 }
                 if (firstTouchX >= actionOptionBoxW * 2) {
                     // escape is selected
@@ -1188,7 +1264,6 @@ window.addEventListener("touchstart", function(e) {
                     battleMob.disEngageBattle(canvas.width * 0.05);
                     mobs.push(battleMob);
                 }
-                curAction = actions[curActionIndex];
             }
         }
     }
@@ -1245,8 +1320,7 @@ function retrieve_characters() {
         })
         .then(function(char) {
             var character = JSON.parse(char.character);
-            character.id = char.id
-            console.log(player.sprite.src);
+            character.id = char.id;
             match_char_attributes(player, character);
         })
         .catch(error => console.log('ERROR LOAD CHARACTERS: ' + error))

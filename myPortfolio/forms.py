@@ -1,7 +1,8 @@
+from email.policy import default
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, EmailField, PasswordField, SubmitField, BooleanField, TextAreaField, SelectField, TelField
-from wtforms.validators import DataRequired, Length, Email, EqualTo
+from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
 from myPortfolio.models import User, Parent, Child
 from flask_login import current_user
 
@@ -66,3 +67,16 @@ class UpdateParentAccountForm(FlaskForm):
             user = Parent.query.filter_by(email=email.data).first()
             if user:
                 raise ValidationError('That email is taken. Please choose a different one.')
+
+class AddQuestionForm(FlaskForm):
+    subjects = [('mat', 'Mathematics'), ('eng', 'English'), ('sci', 'Science')]
+    grades = [('p1', 'Primary 1'), ('p2', 'Primary 2'), ('p3', 'Primary 3'), ('p4', 'Primary 4'), ('p5', 'Primary 5'), ('p6', 'Primary 6')]
+    subject = SelectField('Subject', choices=subjects,
+                           validators=[DataRequired()])
+    grade = SelectField('Grade', choices=grades, validators=[DataRequired()])
+    qn_txt = TextAreaField('Question')
+    qn_pic = FileField('Update Profile Picture', validators=[FileAllowed(['jpg', 'png'])])
+    qn_pic_repeatable = BooleanField('Question Pic Repeatable?')
+    ans = StringField('Answer', validators=[DataRequired()])
+    ans_pic = FileField('Answer Picture', validators=[FileAllowed(['jpg', 'png'])])
+    submit = SubmitField('Update')

@@ -4,8 +4,8 @@ from PIL import Image
 from datetime import date, datetime, timedelta
 from flask import render_template, url_for, flash, redirect, request, jsonify
 from myPortfolio import app, db, bcrypt, admin
-from myPortfolio.forms import RegistrationForm, LoginForm, RegisterChildForm, UpdateParentAccountForm
-from myPortfolio.models import User, Parent, Child, Game_Character_Save
+from myPortfolio.forms import RegistrationForm, LoginForm, RegisterChildForm, UpdateParentAccountForm, AddQuestionForm
+from myPortfolio.models import User, Parent, Child, Game_Character_Save, Question
 from flask_login import login_user, logout_user, current_user, login_required
 from flask_admin.contrib.sqla.view import ModelView
 
@@ -102,6 +102,20 @@ def save_profile_picture(form_picture):
     _, f_ext = os.path.splitext(form_picture.filename)
     picture_fn = random_hex + f_ext
     picture_path = os.path.join(app.root_path, 'static/img/profile_pics/', picture_fn)
+    # resize the picture, with Pillow
+    output_size = (125, 125)
+    i = Image.open(form_picture)
+    i.thumbnail(output_size)
+    #
+    i.save(picture_path)
+
+    return picture_fn
+
+def save_qn_picture(form_picture):
+    random_hex = secrets.token_hex(8)
+    _, f_ext = os.path.splitext(form_picture.filename)
+    picture_fn = random_hex + f_ext
+    picture_path = os.path.join(app.root_path, 'static/img/questions/', picture_fn)
     # resize the picture, with Pillow
     output_size = (125, 125)
     i = Image.open(form_picture)
@@ -245,3 +259,21 @@ def save_character():
                 char.save_date = today
         db.session.commit()
         return 'OK'
+
+@app.route("/admin/add-question", methods=['GET', 'POST'])
+@login_required
+def add_question():
+    if current_user.role == 'admin':
+        form = AddQuestionForm()
+        if form.validate_on_submit():
+            if form.qn_pic.data:
+                qn_pic = save_profile_picture(form.qn_pic.data)
+            if form.qn_pic.data:
+                ans_pic = save_profile_picture(form.ans_pic.data)
+            qn = Question(subject=form.subject.data, grade=form.grade.data, qn_txt=form.qn_txt.data, qn_pic=qn_pic, qn_pic_repeatable=form.qn_pic_repeatable.data, ans=form.ans.data, ans_pic=ans_pic)
+            db.session.add(qn)
+            db.session.commit();
+            flash("new question added: " + qn.subject + " / " + qn.grade)
+            return redirect(url_for(add_question))
+        return render_template('add-question.html', title='Add Question', form=form)
+    return redirect(url_for('dashboard'))

@@ -1,3 +1,4 @@
+from sqlalchemy import false
 from myPortfolio import db, login_manager
 from datetime import datetime
 from flask_login import UserMixin
@@ -44,3 +45,13 @@ class Game_Character_Save(db.Model):
     child_id = db.Column(db.Integer, db.ForeignKey('child.id'), nullable=False)
     game_character = db.Column(db.Text, nullable=False)
     save_date = db.Column(db.DateTime, nullable=False)
+
+class Question(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    subject = db.Column(db.String(3), nullable=False)
+    grade = db.Column(db.String(2), nullable=False)
+    qn_txt = db.Column(db.Text, nullable=True)
+    qn_pic = db.Column(db.String(20), nullable=True)
+    qn_pic_repeatable = db.Column(db.Boolean, nullable=True)
+    ans = db.Column(db.String(), nullable=False)
+    ans_pic = db.Column(db.String(20), nullable=True)
