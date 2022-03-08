@@ -540,7 +540,11 @@ function startAnimating(fps) {
     // load from save if there's existing character saved
     retrieve_characters();
     if (savedCharacters.length > 0) {
+        console.log("saved character loaded");
+        console.log(savedCharacters);
         match_char_attributes(player, savedCharacters[0]);
+    } else {
+        console.log("no saved character loaded, new character created");
     }
     // initialize mobs
     initMobs();
@@ -978,7 +982,7 @@ window.addEventListener("keydown", function(e) {
         player.moving = true;
         if (e.key == "=") {
             save_character(player);
-            retrieve_characters();
+            // retrieve_characters();
         }
     }
     if (curGameState === gameStates[1]) {
@@ -1302,14 +1306,14 @@ function save_character(char) {
         },
         body: JSON.stringify(char_object),
     });
-    console.log("Character saved")
+    console.log("Character saved with char id: ")
     console.log(char_object['id'])
-        // retrieve_characters();
+    retrieve_characters();
 }
 
 function retrieve_characters() {
     var fetch_url = "/game/load_characters";
-    // savedCharacters = [];
+    savedCharacters = [];
     fetch(fetch_url)
         .then(res => {
             if (res.ok) {
@@ -1320,12 +1324,21 @@ function retrieve_characters() {
             return res.json()
         })
         .then(function(char) {
+            console.log('char_obj retrieved from server')
+            console.log("char id: " + char.id)
+            console.log("char detail: " + char.character);
             var character = JSON.parse(char.character);
             character.id = char.id;
             match_char_attributes(player, character);
         })
         .catch(error => console.log('ERROR LOAD CHARACTERS: ' + error))
-    console.log("Characters Loaded");
+
+    if (savedCharacters.length > 0) {
+        console.log("saved char loaded: ");
+        console.log(savedCharacters);
+    } else {
+        console.log("no saved char loaded");
+    }
 }
 
 function match_char_attributes(char, saved_char) {

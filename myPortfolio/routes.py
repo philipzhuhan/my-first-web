@@ -236,9 +236,12 @@ def load_characters():
         saved_character = Game_Character_Save.query.filter_by(child_id=current_user.id).first()
         if saved_character:
             char_object = {
-                "id": saved_character.id,
-                "character": saved_character.game_character,
+                'id': saved_character.id,
+                'character': saved_character.game_character,
             }
+            print('char loaded: ')
+            print(char_object['id'])
+            print(char_object['character'])
             return jsonify(char_object)
 
 @app.route("/game/save_character", methods=['GET', 'POST'])
@@ -249,6 +252,9 @@ def save_character():
         today = datetime.today()
         id = int(req["id"])
         character = req["character"]
+        print('obtained json object')
+        print(id)
+        print(character)
         if id == -1:
             char = Game_Character_Save(child_id=current_user.id, game_character=character, save_date=today)
             db.session.add(char)
