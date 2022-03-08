@@ -978,7 +978,7 @@ window.addEventListener("keydown", function(e) {
         player.moving = true;
         if (e.key == "=") {
             save_character(player);
-            // retrieve_characters();
+            retrieve_characters();
         }
     }
     if (curGameState === gameStates[1]) {
@@ -1289,6 +1289,7 @@ function save_progress() {
 }
 
 function save_character(char) {
+    console.log(char.id);
     var char_object = {
         id: char.id,
         character: JSON.stringify(char),
