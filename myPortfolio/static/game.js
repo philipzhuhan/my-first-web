@@ -1443,6 +1443,7 @@ function retrieve_characters() {
             var character = JSON.parse(char.character);
             character.id = char.id;
             match_char_attributes(player, character);
+            console.log("char ID after match: " + String(player.id));
         })
         .catch(error => console.log('ERROR LOAD CHARACTERS: ' + error))
 
