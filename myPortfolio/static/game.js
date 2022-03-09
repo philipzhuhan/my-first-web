@@ -108,40 +108,11 @@ class Player {
         this.curMpBarW = this.curMp / this.maxMp * this.mpBarW;
     }
 
-    scale(factor) {
-        this.x *= factor;
-        this.y *= factor;
-        this.width *= factor;
-        this.height *= factor;
-        this.speed = this.width / 3;
-
-        this.hpBarX = this.x;
-        this.hpBarY = this.y + this.height;
-        this.hpBarW = this.width;
-        this.hpBarH = this.height * 0.1;
-        this.curHpBarW = this.curHp / this.maxHp * this.hpBarW;
-        this.mpBarX = this.x;
-        this.mpBarY = this.hpBarY + this.hpBarH;
-        this.mpBarW = this.width;
-        this.mpBarH = this.height * 0.1;
-        this.curMpBarW = this.curMp / this.maxMp * this.mpBarW;
-    }
-
-    changeOrientation(newOrientation, oldCanvasW, oldCanvasH, newCanvasW, newCanvasH) {
-        var xPerc = this.x / oldCanvasW;
-        var yPerc = this.y / oldCanvasH;
-
-        this.x = newCanvasW * xPerc;
-        this.y = newCanvasH * yPerc;
-
-        if (newOrientation == 'portrait-primary' || screenOrientation == 'portrait-secondary') {
-            this.height = newCanvasH * 0.05;
-            this.width = this.height / this.srcFrameH * this.srcFrameW;
-        } else {
-            this.width = newCanvasW * 0.05;
-            this.height = this.width / this.srcFrameW * this.srcFrameH;
-        }
-
+    review(x, y, width) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = this.width / this.srcFrameW * this.srcFrameH;
         this.speed = this.width / 3;
 
         this.hpBarX = this.x;
@@ -303,6 +274,15 @@ class Mob {
         this.isAlive = true;
         this.isAttacking = false;
 
+        // display level
+        this.lvlW = this.width;
+        this.lvlH = this.height * 0.3;
+        this.lvlX = this.x + this.lvlW / 3;
+        this.lvlY = this.y - this.height * 0.3 + this.lvlH;
+
+        this.lvlFontSize = this.lvlH * 0.8;
+        this.fontStyle = this.lvlFontSize + "px Arial";
+        // display hp / mp
         this.hpBarX = this.x;
         this.hpBarY = this.y + this.height;
         this.hpBarW = this.width;
@@ -315,51 +295,25 @@ class Mob {
         this.curMpBarW = this.curMp / this.maxMp * this.mpBarW;
     }
 
-    scale(factor) {
-        this.x *= factor;
-        this.y *= factor;
-        this.width *= factor;
-        this.height *= factor;
-        this.speed = this.width / 10;
-
-        this.initX *= factor;
-        this.initY *= factor;
-        this.moveLimit = this.width * 2;
-
-        this.hpBarX = this.x;
-        this.hpBarY = this.y + this.height;
-        this.hpBarW = this.width;
-        this.hpBarH = this.height * 0.1;
-        this.curHpBarW = this.curHp / this.maxHp * this.hpBarW;
-        this.mpBarX = this.x;
-        this.mpBarY = this.hpBarY + this.hpBarH;
-        this.mpBarW = this.width;
-        this.mpBarH = this.height * 0.1;
-        this.curMpBarW = this.curMp / this.maxMp * this.mpBarW;
-    }
-
-    changeOrientation(newOrientation, oldCanvasW, oldCanvasH, newCanvasW, newCanvasH) {
-        var xPerc = this.x / oldCanvasW;
-        var yPerc = this.y / oldCanvasH;
-        var originXPerc = this.initX / oldCanvasW;
-        var originYPerc = this.initY / oldCanvasH
-
-        this.x = newCanvasW * xPerc;
-        this.y = newCanvasH * yPerc;
-        this.initX = newCanvasW * originXPerc;
-        this.initY = newCanvasH * originYPerc;
-
-        if (newOrientation == 'portrait-primary' || screenOrientation == 'portrait-secondary') {
-            this.height = newCanvasH * 0.05;
-            this.width = this.height / this.srcFrameH * this.srcFrameW;
-        } else {
-            this.width = newCanvasW * 0.05;
-            this.height = this.width / this.srcFrameW * this.srcFrameH;
-        }
-
+    review(mobInitX, mobInitY, mobX, mobY, mobW) {
+        this.initX = mobInitX;
+        this.initY = mobInitY;
+        this.x = mobX;
+        this.y = mobY;
+        this.width = mobW;
+        this.height = this.width / this.srcFrameW * this.srcFrameH;
         this.speed = this.width / 10;
         this.moveLimit = this.width * 2;
 
+        // display level
+        this.lvlW = this.width;
+        this.lvlH = this.height * 0.3;
+        this.lvlX = this.x + this.lvlW / 3;
+        this.lvlY = this.y - this.height * 0.3 + this.lvlH;
+
+        this.lvlFontSize = this.lvlH * 0.8;
+        this.fontStyle = this.lvlFontSize + "px Arial";
+        // display hp / mp
         this.hpBarX = this.x;
         this.hpBarY = this.y + this.height;
         this.hpBarW = this.width;
@@ -376,7 +330,11 @@ class Mob {
         var srcX = this.srcX + this.srcFrameW * this.frameX;
         var srcY = this.srcY + this.srcFrameH * this.frameY;
         ctx.drawImage(this.sprite, srcX, srcY, this.srcFrameW, this.srcFrameH, this.x, this.y, this.width, this.height);
-        // draw hp bar
+        // write the level of the mob
+        ctx.fillStyle = "black";
+        ctx.font = this.fontStyle;
+        ctx.fillText("lvl " + this.lvl, this.lvlX, this.lvlY, this.lvlW)
+            // draw hp bar
         ctx.fillStyle = '#808080';
         ctx.fillRect(this.hpBarX, this.hpBarY, this.hpBarW, this.hpBarH);
         if (this.curHp > this.maxHp * 0.3) {
@@ -396,7 +354,7 @@ class Mob {
         if (curGameState === gameStates[0]) {
             if (this.moving == true) {
                 if (this.direction === "down") {
-                    if (this.y >= this.initY + this.moveLimit || this.y >= canvas.height - this.height) {
+                    if (this.y >= this.initY + this.moveLimit || this.y >= canvas.height - this.height * 1.1) {
                         this.direction = "right";
                         this.frameY = 1;
                     } else {
@@ -414,7 +372,7 @@ class Mob {
                 }
 
                 if (this.direction === "up") {
-                    if (this.y <= this.initY - this.moveLimit || this.y <= 0) {
+                    if (this.y <= this.initY - this.moveLimit || this.y <= 0 + this.height * 0.1) {
                         this.direction = "left";
                         this.frameY = 0;
                     } else {
@@ -893,63 +851,46 @@ function drawActionsBox() {
 }
 
 function adjustView() {
-    var newOrientation = (screen.orientation || {}).type || screen.mozOrientation || screen.msOrientation;
     var originW = canvas.width;
     var originH = canvas.height;
+
     vpWidth = document.documentElement.clientWidth;
     vpHeight = document.documentElement.clientHeight;
-    var mapW, mapH;
 
-    if (isMobile) {
-        if (newOrientation != screenOrientation) {
-            console.log("screen orientation changed to: " + newOrientation);
-            canvas.width = vpWidth;
-            canvas.height = vpHeight;
-            player.changeOrientation(newOrientation, originW, originH, canvas.width, canvas.height);
-            for (const mob in mobs) {
-                mob.changeOrientation(newOrientation, originW, originH, canvas.width, canvas.height);
-            }
-            screenOrientation = newOrientation;
-        } else {
-            mapW = exploreMap.width;
-            mapH = exploreMap.height;
-            // canvas should be mapW * mapH scale
-            if (vpWidth / vpHeight <= mapW / mapH) {
-                canvas.width = vpWidth;
-                canvas.height = canvas.width * mapH / mapW;
-            } else {
-                canvas.height = vpHeight;
-                canvas.width = canvas.height * mapW / mapH;
-            }
-            var factor = canvas.width / originW;
-            player.scale(factor);
-            for (i = 0; i < mobs.length; i++) {
-                mobs[i].scale(factor);
-            }
-            if (curGameState == gameStates[1]) {
-                battleMob.scale(factor);
-            }
-        }
+    // review player position and size
+    var playerXPerc, playerYPerc, playerX, playerY, playerW;
+    playerXPerc = player.x / originW;
+    playerYPerc = player.y / originH;
+    if (vpWidth > vpHeight) {
+        playerW = vpWidth * 0.05;
     } else {
-        mapW = exploreMap.width;
-        mapH = exploreMap.height;
-        // canvas should be mapW * mapH scale
-        if (vpWidth / vpHeight <= mapW / mapH) {
-            canvas.width = vpWidth;
-            canvas.height = canvas.width * mapH / mapW;
-        } else {
-            canvas.height = vpHeight;
-            canvas.width = canvas.height * mapW / mapH;
-        }
-        var factor = canvas.width / originW;
-        player.scale(factor);
-        for (i = 0; i < mobs.length; i++) {
-            mobs[i].scale(factor);
-        }
-        if (curGameState == gameStates[1]) {
-            battleMob.scale(factor);
-        }
+        playerW = vpHeight * 0.05 / player.srcFrameH * player.srcFrameW;
     }
+    playerX = vpWidth * playerXPerc;
+    playerY = vpHeight * playerYPerc;
+    player.review(playerX, playerY, playerW);
+
+    // review mobs position and size
+    for (i = 0; i < mobs.length; i++) {
+        var mobInitXPerc, mobInitYPerc, mobXPerc, mobYPerc, mobInitX, mobInitY, mobX, mobY, mobW;
+        mobInitXPerc = mobs[i].initX / originW;
+        mobInitYPerc = mobs[i].initY / originH;
+        mobXPerc = mobs[i].x / originW;
+        mobYPerc = mobs[i].y / originH;
+        if (vpWidth > vpHeight) {
+            mobW = vpWidth * 0.05;
+        } else {
+            mobW = vpHeight * 0.05 / player.srcFrameH * player.srcFrameW;
+        }
+        mobInitX = vpWidth * mobInitXPerc;
+        mobInitY = vpHeight * mobInitYPerc;
+        mobX = vpWidth * mobXPerc;
+        mobY = vpHeight * mobYPerc;
+        mobs[i].review(mobInitX, mobInitY, mobX, mobY, mobW);
+    }
+
+    canvas.width = vpWidth;
+    canvas.height = vpHeight;
     // resize save icon
     saveX = canvas.width * 0.85;
     saveY = canvas.height * 0.05;
@@ -966,6 +907,90 @@ function adjustView() {
     helpW = canvas.width * 0.03;
     helpH = canvas.height * 0.03;
 }
+
+// function adjustView() {
+//     var newOrientation = (screen.orientation || {}).type || screen.mozOrientation || screen.msOrientation;
+//     var originW = canvas.width;
+//     var originH = canvas.height;
+//     vpWidth = document.documentElement.clientWidth;
+//     vpHeight = document.documentElement.clientHeight;
+//     var mapW, mapH;
+
+//     if (isMobile) {
+//         if (newOrientation != screenOrientation) {
+//             console.log("screen orientation changed to: " + newOrientation);
+//             canvas.width = vpWidth;
+//             canvas.height = vpHeight;
+//             player.changeOrientation(newOrientation, originW, originH, canvas.width, canvas.height);
+//             if (screenOrientation == 'portrait-primary' || screenOrientation == 'portrait-secondary') {
+//                 playerH = canvas.height * 0.05;
+//                 playerW = playerH / 150 * 115;
+//             } else {
+//                 playerW = canvas.width * 0.05;
+//                 playerH = playerW / 115 * 150;
+//             }
+//             player.resize(playerW, playerH);
+//             for (i = 0; i < mobs.length; i++) {
+//                 mobs[i].changeOrientation(newOrientation, originW, originH, canvas.width, canvas.height);
+//                 mobs[i].resize(canvas.width * 0.05);
+//             }
+//             screenOrientation = newOrientation;
+//         } else {
+//             mapW = exploreMap.width;
+//             mapH = exploreMap.height;
+//             // canvas should be mapW * mapH scale
+//             if (vpWidth / vpHeight <= mapW / mapH) {
+//                 canvas.width = vpWidth;
+//                 canvas.height = canvas.width * mapH / mapW;
+//             } else {
+//                 canvas.height = vpHeight;
+//                 canvas.width = canvas.height * mapW / mapH;
+//             }
+//             var factor = canvas.width / originW;
+//             player.scale(factor);
+//             for (i = 0; i < mobs.length; i++) {
+//                 mobs[i].scale(factor);
+//             }
+//             if (curGameState == gameStates[1]) {
+//                 battleMob.scale(factor);
+//             }
+//         }
+//     } else {
+//         mapW = exploreMap.width;
+//         mapH = exploreMap.height;
+//         // canvas should be mapW * mapH scale
+//         if (vpWidth / vpHeight <= mapW / mapH) {
+//             canvas.width = vpWidth;
+//             canvas.height = canvas.width * mapH / mapW;
+//         } else {
+//             canvas.height = vpHeight;
+//             canvas.width = canvas.height * mapW / mapH;
+//         }
+//         var factor = canvas.width / originW;
+//         player.scale(factor);
+//         for (i = 0; i < mobs.length; i++) {
+//             mobs[i].scale(factor);
+//         }
+//         if (curGameState == gameStates[1]) {
+//             battleMob.scale(factor);
+//         }
+//     }
+//     // resize save icon
+//     saveX = canvas.width * 0.85;
+//     saveY = canvas.height * 0.05;
+//     saveW = canvas.width * 0.03;
+//     saveH = canvas.height * 0.03;
+//     // resize char info icon
+//     charInfoX = canvas.width * 0.9;
+//     charInfoY = canvas.height * 0.05;
+//     charInfoW = canvas.width * 0.03;
+//     charInfoH = canvas.height * 0.03;
+//     // resize question mark
+//     helpX = canvas.width * 0.95;
+//     helpY = canvas.height * 0.05;
+//     helpW = canvas.width * 0.03;
+//     helpH = canvas.height * 0.03;
+// }
 
 function drawBackground() {
     ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
