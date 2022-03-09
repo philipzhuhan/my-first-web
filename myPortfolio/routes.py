@@ -5,7 +5,7 @@ from datetime import date, datetime, timedelta
 from flask import render_template, url_for, flash, redirect, request, jsonify
 from myPortfolio import app, db, bcrypt, admin
 from myPortfolio.forms import RegistrationForm, LoginForm, RegisterChildForm, UpdateParentAccountForm, AddQuestionForm
-from myPortfolio.models import User, Parent, Child, Game_Character_Save, Question
+from myPortfolio.models import User, Parent, Child, Game_Character_Save, Question, Progress
 from flask_login import login_user, logout_user, current_user, login_required
 from flask_admin.contrib.sqla.view import ModelView
 
@@ -22,6 +22,7 @@ admin.add_view(MyModelView(User, db.session))
 admin.add_view(MyModelView(Parent, db.session))
 admin.add_view(MyModelView(Child, db.session))
 admin.add_view(MyModelView(Game_Character_Save, db.session))
+admin.add_view(MyModelView(Progress, db.session))
 
 @app.route("/")
 @app.route("/home")
@@ -214,17 +215,15 @@ def jsGame():
 @login_required
 def save_progress():
     req = request.get_json()
-    today = date.today()
-    #subject = req["subject"]
-    question_id = req["qnId"]
-    qn = Question.query.filter_by(id=question_id).first()
-    subject = qn.subject
-    topic = qn.topic
+    subject = req["subject"]
     result = req["result"]
-    answer_txt = req["answerTxt"]
-    answer_pic = req["answerPic"]
+    operation = req["operation"]
+    question = req["question"]
+    correctAnswer = req["correctAnswer"]
+    ansChosen = req["ansChosen"]
     duration = req["duration"]
-    progress = Progress(child_id=current_user.id, date=today, question_id=question_id, subject = subject, topic = topic, result=result, answer_txt = answer_txt, answer_pic = answer_pic, duration=duration)
+    progress = Progress(child_id=current_user.id, subject=subject, result=result, operation=operation, question=question, correct_ans=correctAnswer, ans_chosen=ansChosen, duration=duration)
+    print(progress)
     db.session.add(progress)
     db.session.commit()
     return "OK"

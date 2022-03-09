@@ -3,16 +3,27 @@ var screenOrientation = (screen.orientation || {}).type || screen.mozOrientation
 let background = new Image();
 let cursor = new Image();
 let help = new Image();
+let charIcon = new Image();
+let saveIcon = new Image();
 const helpImg = {
     src: "static/img/red-question-mark.png",
     width: 835,
     height: 835,
 };
-// let redCross = new Image();
+const charIconImg = {
+    src: "static/img/letter-c.png",
+    width: 512,
+    height: 512,
+};
 const redCrossImg1 = {
     src: "static/img/red-cross.png",
     width: 645,
     height: 644,
+};
+const saveIconImg = {
+    src: "static/img/save-icon.png",
+    width: 442,
+    height: 442,
 };
 // const redCrossImg2 = {
 //     src: "static/img/Red-cross-mark-icon.png",
@@ -47,15 +58,11 @@ let touchArrowW, touchArrowH;
 let canvas, ctx;
 const isMobile = ('ontouchstart' in document.documentElement && navigator.userAgent.match(/Mobi/));
 
-
-
 class Player {
     constructor(x, y, width, height) {
         this.id = -1;
         this.sprite = new Image();
         this.sprite.src = "static/img/PlayerSpriteSheet.png";
-        // this.srcW = 600;
-        // this.srcH = 600
         this.srcFrameW = 115;
         this.srcFrameH = 150;
         this.srcX = 70;
@@ -469,7 +476,9 @@ class Mob {
 let fps, fpsInterval, startTime, now, then, elapsed;
 let player;
 let playerX, playerY, playerW, playerH;
-let qnMarkX, qnMarkY, qnMarkW, qnMarkH;
+let helpX, helpY, helpW, helpH;
+let charInfoX, charInfoY, charInfoW, charInfoH;
+let saveX, saveY, saveW, saveH;
 let gameStates = ['Explore', 'Battle'];
 let curGameState = gameStates[0];
 let keys = [];
@@ -486,6 +495,7 @@ let actionBoxX, actionBoxY, actionBoxW, actionBoxH;
 let actionOptionBoxW, actionOptionBoxH
 let actionBoxTxtSize, actionBoxTxtStyle, actionBoxTxtFontStyle;
 let displayQn = false;
+let subject = 'mat';
 let qn = 'some question';
 let ansOpts = [];
 let ansOptIndex = 0;
@@ -495,6 +505,8 @@ let txtStyle = "Arial";
 let indexOfAns = -1;
 let qnBoxX, qnBoxY, qnBoxW, qnBoxH, qnTxtX, qnTxtY, qnTxtSize, qnTxtFontStyle, optX, optY, optW, optH, optTxtSize, optTxtFontStyle, optTxtX, optTxtY;
 let cursorX, cursorY, cursorW, cursorH;
+let answerCorrect = false;
+let qnStart, qnEnd;
 
 let ops = ['+', 'count'];
 let op;
@@ -509,6 +521,7 @@ const cupcakeImg = {
 
 let notifications = [];
 let displayHelp = false;
+let displayCharInfo = false;
 
 function startAnimating(fps) {
     fpsInterval = 1000 / fps;
@@ -527,6 +540,8 @@ function startAnimating(fps) {
     cursor.src = cursorImg.src;
     touchArrow.src = touchArrowImg.src;
     help.src = helpImg.src;
+    charIcon.src = charIconImg.src;
+    saveIcon.src = saveIconImg.src;
     // redCross.src = redCrossImg1.src;
     if (screenOrientation == 'portrait-primary' || screenOrientation == 'portrait-secondary') {
         playerH = canvas.height * 0.05;
@@ -540,19 +555,29 @@ function startAnimating(fps) {
     // load from save if there's existing character saved
     retrieve_characters();
     if (savedCharacters.length > 0) {
-        console.log("saved character loaded");
-        console.log(savedCharacters);
         match_char_attributes(player, savedCharacters[0]);
+        console.log("saved character loaded");
     } else {
         console.log("no saved character loaded, new character created");
     }
     // initialize mobs
     initMobs();
+
+    // initialize save icon
+    saveX = canvas.width * 0.85;
+    saveY = canvas.height * 0.05;
+    saveW = canvas.width * 0.04;
+    saveH = saveW / saveIconImg.width / saveIconImg.height;
+    // initialize char info icon
+    charInfoX = canvas.width * 0.9;
+    charInfoY = canvas.height * 0.05;
+    charInfoW = canvas.width * 0.04;
+    charInfoH = charInfoW / charIconImg.width / charIconImg.height;
     // initialize question mark
-    qnMarkX = canvas.width * 0.95;
-    qnMarkY = canvas.height * 0.05;
-    qnMarkW = canvas.width * 0.03;
-    qnMarkH = canvas.height * 0.03;
+    helpX = canvas.width * 0.95;
+    helpY = canvas.height * 0.05;
+    helpW = canvas.width * 0.04;
+    helpH = helpW / helpImg.width / helpImg.height;
     // adjustView();
     // map.width = vpWidth;
     // map.height = vpHeight;
@@ -581,18 +606,17 @@ function animate() {
         if (curGameState === gameStates[0]) {
             // explore state
             player.move();
-            drawBackground();
             for (i = 0; i < mobs.length; i++) {
                 mobs[i].move();
-                mobs[i].draw(ctx);
                 if (distance(player, mobs[i]) <= player.width / 2 + mobs[i].width / 2) {
                     // player encounter mob
                     battleMob = mobs[i];
                     mobs.splice(i, 1);
                     curGameState = gameStates[1];
-                    curAction = actions[0];
+                    curActionIndex = 0;
+                    curAction = actions[curActionIndex];
                     initiate_action_box();
-                    var playerW, playerX, playerY, mobX, mobY, mobW;
+                    var playerX, playerY, playerW, mobX, mobY, mobW;
                     playerW = canvas.height / 4;
                     playerX = canvas.width / 4 - playerW / 2;
                     playerY = canvas.height / 3 - playerW / player.srcFrameW * player.srcFrameH / 2;
@@ -604,12 +628,17 @@ function animate() {
                     console.log("engaging battle");
                 }
             }
+            drawBackground();
+            for (i = 0; i < mobs.length; i++) {
+                mobs[i].draw(ctx);
+            }
             player.draw(ctx);
             if (isMobile && touchDetected) {
                 drawTouchArrow();
             }
         }
         if (curGameState === gameStates[1]) {
+            // battle state
             drawBackground();
             drawActionsBox();
             if (!isMobile) {
@@ -620,6 +649,8 @@ function animate() {
             player.draw(ctx);
             battleMob.draw(ctx);
         }
+        drawSaveIcon();
+        drawCharInfo();
         drawHelp();
     }
 }
@@ -629,7 +660,7 @@ function drawHelp() {
     if (displayHelp == false) {
         // console.log('draw ?');
         help.src = helpImg.src;
-        ctx.drawImage(help, qnMarkX, qnMarkY, qnMarkW, qnMarkH);
+        ctx.drawImage(help, helpX, helpY, helpW, helpH);
     } else {
         help.src = redCrossImg1.src;
         var helpTxt = [];
@@ -667,8 +698,49 @@ function drawHelp() {
         for (i = 0; i < helpTxt.length; i++) {
             ctx.fillText(helpTxt[i], canvas.width * 0.02 + txtSize, canvas.height * 0.05 + txtSize * i, canvas.width * 0.85);
         }
-        ctx.drawImage(help, qnMarkX, qnMarkY, qnMarkW, qnMarkH);
+        ctx.drawImage(help, helpX, helpY, helpW, helpH);
     }
+}
+
+function drawCharInfo() {
+    var txtSize, txtStyle;
+    if (displayCharInfo == false) {
+        // console.log('draw ?');
+        charIcon.src = charIconImg.src;
+        ctx.drawImage(charIcon, charInfoX, charInfoY, charInfoW, charInfoH);
+    } else {
+        charIcon.src = redCrossImg1.src;
+        var charInfo = [];
+        if (isMobile) {
+            charInfo.push("Name: " + player.name);
+            charInfo.push("Level: " + player.lvl);
+            charInfo.push("Max HP: " + player.maxHp);
+            charInfo.push("Cur HP: " + player.curHp);
+            charInfo.push("Max MP: " + player.maxMp);
+            charInfo.push("Cur HP: " + player.curMp);
+            charInfo.push("Max EXP: " + player.maxExp);
+            charInfo.push("Cur EXP: " + player.curExp);
+            charInfo.push("ATK: " + player.atk);
+            charInfo.push("DEF: " + player.def);
+        } else {
+            // something else
+        }
+        txtSize = canvas.height * 0.05;
+        txtStyle = "Arial";
+        ctx.fillStyle = "white";
+        ctx.fillRect(canvas.width * 0.02, canvas.height * 0.01, canvas.width * 0.96, canvas.height * 0.96);
+
+        ctx.fillStyle = "black";
+        ctx.font = txtSize + "px " + txtStyle;
+        for (i = 0; i < charInfo.length; i++) {
+            ctx.fillText(charInfo[i], canvas.width * 0.02 + txtSize, canvas.height * 0.05 + txtSize * i, canvas.width * 0.85);
+        }
+        ctx.drawImage(charIcon, charInfoX, charInfoY, charInfoW, charInfoH);
+    }
+}
+
+function drawSaveIcon() {
+    ctx.drawImage(saveIcon, saveX, saveY, saveW, saveH);
 }
 
 function initiate_action_box() {
@@ -680,10 +752,10 @@ function initiate_action_box() {
     actionBoxX = 0;
     actionBoxW = canvas.width;
     actionBoxH = canvas.height * 0.3;
-    actionBoxY = canvas.height - actionBoxH;
+    actionBoxY = canvas.height * 0.7;
     actionOptionBoxH = actionBoxH;
-    actionOptionBoxW = canvas.width / actions.length;
-    actionBoxTxtSize = Math.floor(actionOptionBoxH * 0.5);
+    actionOptionBoxW = actionBoxW / actions.length;
+    actionBoxTxtSize = actionOptionBoxH * 0.3;
     actionBoxTxtStyle = "Arial";
     actionBoxTxtFontStyle = actionBoxTxtSize + "px " + actionBoxTxtStyle;
 
@@ -694,10 +766,78 @@ function initiate_action_box() {
     cursorH = cursorW / cursorImg.width * cursorImg.height;
 }
 
+function generateQn(opr, range) {
+    var ansRange;
+    ansOpts = [];
+    indexOfAns = Math.floor(Math.random() * 4);
+    if (opr == '+') {
+        var fNum = Math.ceil(Math.random() * range);
+        var sNum = Math.ceil(Math.random() * range);
+        qn = "How much is " + fNum + " " + opr + " " + sNum + "?";
+        ans = fNum + sNum;
+        ansRange = range + range;
+    }
+
+    if (opr == '*') {
+        var fNum = Math.ceil(Math.random() * range);
+        var sNum = Math.ceil(Math.random() * range);
+        qn = "How much is " + fNum + " " + opr + " " + sNum + "?";
+        ans = fNum * sNum;
+        ansRange = range * range;
+    }
+
+    if (opr === "count") {
+        var count = Math.ceil(Math.random() * range);
+        qnImg.src = cupcakeImg.src;
+        qn = 'How many ' + cupcakeImg.name + ' do you see below?';
+        ans = count;
+        ansRange = range;
+    }
+    //create 3 wrong options different from other options & add ans & wrong options in ops[];
+    for (i = 0; i < 4; i++) {
+        if (i == indexOfAns) {
+            ansOpts.push(ans);
+        } else {
+            var opt = Math.ceil(Math.random() * ansRange);
+            while (ansOpts.includes(opt) || opt == ans) {
+                opt = Math.ceil(Math.random() * ansRange);
+            }
+            ansOpts.push(opt);
+        }
+    }
+    qnStart = Date.now();
+    console.log('generated new question with operation: ' + op + ', and answer: ' + ans + ' at index: ' + indexOfAns);
+    console.log('answers generated: ' + ans);
+}
+
+function createQnBox() {
+    // create the qn
+    op = ops[Math.floor(Math.random() * ops.length)];
+    generateQn(op, 10);
+    qnBoxX = actionBoxX;
+    qnBoxY = actionBoxY;
+    qnBoxW = actionBoxW / 3 * 2;
+    qnBoxH = actionBoxH / 3;
+    qnTxtSize = qnBoxH / 3;
+    qnTxtFontStyle = qnTxtSize + "px " + txtStyle;
+    qnTxtX = qnBoxX + qnTxtSize;
+    qnTxtY = qnBoxY + qnTxtSize * 2;
+    optX = qnBoxX + qnBoxW;
+    optY = qnBoxY;
+    optW = qnBoxW / 2;
+    optH = actionBoxH / 4;
+    optTxtSize = optH / 3;
+    optTxtFontStyle = optTxtSize + "px " + txtStyle;
+    optTxtX = optX + optTxtSize * 2;
+    optTxtY = optY + optTxtSize * 2;
+    displayQn = true;
+    ansOptIndex = 0;
+}
+
 function drawActionsBox() {
     // draw action box
     ctx.fillStyle = "white";
-    ctx.fillRect(actionBoxX, actionBoxY, canvas.width, actionBoxH);
+    ctx.fillRect(actionBoxX, actionBoxY, actionBoxW, actionBoxH);
 
     if (displayQn == true) {
         // draw question & options, place cursor on option 1
@@ -710,8 +850,9 @@ function drawActionsBox() {
             // draw item * count times at x: qnboxX, qnboxY + qnboxH, qnboxW, actionboxH / 3 * 2;
             var drawItemW = qnBoxW / ans;
             var drawItemH = drawItemW / cupcakeImg.width * cupcakeImg.height;
-            if (drawItemH >= actionBoxH / 3 * 2) {
-                drawItemH = actionBoxH * 0.8;
+            if (drawItemH > actionBoxH / 3 * 2) {
+                // if drawItemH is higher than 2/3 of the Action Box, reduce item height to 2/3 of draw area height and reduce item width accordingly
+                drawItemH = actionBoxH / 3 * 2;
                 drawItemW = drawItemH / cupcakeImg.height * cupcakeImg.width;
             }
             for (i = 0; i < ans; i++) {
@@ -719,15 +860,13 @@ function drawActionsBox() {
             }
         }
         for (i = 0; i < ansOpts.length; i++) {
-            if (i == ansOptIndex) {
-                ctx.fillStyle = "yellow";
-                ctx.fillRect(optX, optY + optH * i, optW, optH);
-                ctx.beginPath();
-            }
-            ctx.lineWidth = "6";
+            // draw options on the 1/3 right portion of Action Box
+            // draw option button outline
+            ctx.lineWidth = "1";
             ctx.strokeStyle = "blue";
             ctx.rect(optX, optY + optH * i, optW, optH);
             ctx.stroke();
+            // fill in the option txt
             ctx.fillStyle = "black";
             ctx.font = optTxtFontStyle;
             ctx.fillText(ansOpts[i], optX + optW / 2, optTxtY + optH * i, optW);
@@ -741,7 +880,7 @@ function drawActionsBox() {
             if (i == curActionIndex) {
                 ctx.fillStyle = "yellow";
                 ctx.fillRect(actionBoxX + actionOptionBoxW * i, actionBoxY, actionOptionBoxW, actionOptionBoxH);
-                ctx.beginPath();
+                // ctx.beginPath();
             }
             ctx.lineWidth = "1";
             ctx.strokeStyle = "blue";
@@ -811,11 +950,21 @@ function adjustView() {
             battleMob.scale(factor);
         }
     }
+    // resize save icon
+    saveX = canvas.width * 0.85;
+    saveY = canvas.height * 0.05;
+    saveW = canvas.width * 0.03;
+    saveH = canvas.height * 0.03;
+    // resize char info icon
+    charInfoX = canvas.width * 0.9;
+    charInfoY = canvas.height * 0.05;
+    charInfoW = canvas.width * 0.03;
+    charInfoH = canvas.height * 0.03;
     // resize question mark
-    qnMarkX = canvas.width * 0.95;
-    qnMarkY = canvas.height * 0.05;
-    qnMarkW = canvas.width * 0.03;
-    qnMarkH = canvas.height * 0.03;
+    helpX = canvas.width * 0.95;
+    helpY = canvas.height * 0.05;
+    helpW = canvas.width * 0.03;
+    helpH = canvas.height * 0.03;
 }
 
 function drawBackground() {
@@ -860,65 +1009,6 @@ function initMobs() {
 
 function distance(objA, objB) {
     return Math.sqrt(((objA.x + objA.width / 2) - (objB.x + objB.width / 2)) ** 2 + ((objA.y + objA.height / 2) - (objB.y + objB.height / 2)) ** 2);
-}
-
-function generateQn(opr, range) {
-    var ansRange;
-    ansOpts = [];
-    indexOfAns = Math.floor(Math.random() * 4);
-    if (opr == '+') {
-        var fNum = Math.ceil(Math.random() * range);
-        var sNum = Math.ceil(Math.random() * range);
-        qn = "How much is " + fNum + " " + opr + " " + sNum + "?";
-        ans = fNum + sNum;
-        ansRange = range + range;
-    }
-
-    if (opr === "count") {
-        var count = Math.ceil(Math.random() * range);
-        qnImg.src = cupcakeImg.src;
-        qn = 'How many ' + cupcakeImg.name + ' do you see below?';
-        ans = count;
-        ansRange = range;
-    }
-    //create 3 wrong options different from other options & add ans & wrong options in ops[];
-    for (i = 0; i < 4; i++) {
-        if (i == indexOfAns) {
-            ansOpts.push(ans);
-        } else {
-            var opt = Math.ceil(Math.random() * ansRange);
-            while (ansOpts.includes(opt) || opt == ans) {
-                opt = Math.ceil(Math.random() * ansRange);
-            }
-            ansOpts.push(opt);
-        }
-    }
-    console.log('generated new question with operation: ' + op + ', and answer: ' + ans + ' at index: ' + indexOfAns);
-    console.log('answers generated: ' + ans);
-}
-
-function createQnBox() {
-    // create the qn
-    op = ops[Math.floor(Math.random() * ops.length)];
-    generateQn(op, 10);
-    qnBoxX = actionBoxX;
-    qnBoxY = actionBoxY;
-    qnBoxW = actionBoxW / 3 * 2;
-    qnBoxH = actionBoxH / 3;
-    qnTxtSize = qnBoxH / 3;
-    qnTxtFontStyle = qnTxtSize + "px " + txtStyle;
-    qnTxtX = qnBoxX + qnTxtSize;
-    qnTxtY = qnBoxY + qnTxtSize;
-    optX = qnBoxX + qnBoxW;
-    optY = qnBoxY;
-    optW = qnBoxW / 2;
-    optH = actionBoxH / 4;
-    optTxtSize = optH / 3;
-    optTxtFontStyle = optTxtSize + "px " + txtStyle;
-    optTxtY = optY + optTxtSize * 2;
-    // }
-    displayQn = true;
-    ansOptIndex = 0;
 }
 
 function attackMob(mob, isCritical) {
@@ -1179,7 +1269,7 @@ window.addEventListener("touchstart", function(e) {
     // console.log(touch.pageX + ' / ' + touch.pageY);
     firstTouchX = touch.clientX;
     firstTouchY = touch.clientY;
-    if (firstTouchX > qnMarkX && firstTouchX < qnMarkX + qnMarkW && firstTouchY > qnMarkY && qnMarkY < qnMarkY + qnMarkH) {
+    if (firstTouchX > helpX && firstTouchX < helpX + helpW && firstTouchY > helpY && firstTouchY < helpY + helpH) {
         // click is in the help icon area
         if (displayHelp == true) {
             displayHelp = false;
@@ -1193,6 +1283,24 @@ window.addEventListener("touchstart", function(e) {
             }
         }
     }
+    if (firstTouchX > charInfoX && firstTouchX < charInfoX + charInfoW && firstTouchY > charInfoY && firstTouchY < charInfoY + charInfoH) {
+        // click is in the char icon area
+        if (displayCharInfo == true) {
+            displayCharInfo = false;
+            for (i = 0; i < mobs.length; i++) {
+                mobs[i].moving = true;
+            }
+        } else {
+            displayCharInfo = true;
+            for (i = 0; i < mobs.length; i++) {
+                mobs[i].moving = false;
+            }
+        }
+    }
+    if (firstTouchX > saveX && firstTouchX < saveX + saveW && firstTouchY > saveY && firstTouchY < saveY + saveH) {
+        // click is in the save icon area
+        save_character(player);
+    }
     if (curGameState === gameStates[0]) {
         trackMove = true;
         window.addEventListener("touchmove", trackTouchMove);
@@ -1202,43 +1310,46 @@ window.addEventListener("touchstart", function(e) {
         // Battle state
         if (displayQn === true) {
             // answer option selection
-            if (firstTouchY > optY) {
+            if (firstTouchX > optX && firstTouchY > optY) {
                 // touch within valid ans option select Y range
-                if (firstTouchX < optW) {
+                if (firstTouchY < optY + optH) {
                     // first option
                     ansOptIndex = 0;
                 }
-                if (firstTouchX >= optW && firstTouchX < optW * 2) {
+                if (firstTouchY >= optY + optH && firstTouchY < optY + optH * 2) {
                     // second option
                     ansOptIndex = 1;
                 }
-                if (firstTouchX >= optW * 2 && firstTouchX < optW * 3) {
+                if (firstTouchY >= optY + optH * 2 && firstTouchY < optY + optH * 3) {
                     // second option
                     ansOptIndex = 2;
                 }
-                if (firstTouchX >= optW * 3 && firstTouchX < optW * 4) {
+                if (firstTouchY >= optY + optH * 3 && firstTouchX < optY + optH * 4) {
                     // second option
                     ansOptIndex = 3;
                 }
                 console.log('answer option index selected: ' + ansOptIndex);
                 ansOptSelected = ansOpts[ansOptIndex];
                 // validate answer option vs correct index
+                answerCorrect = ansOptIndex == indexOfAns;
                 if (curAction == actions[0]) {
-                    if (ansOptIndex == indexOfAns) {
+                    if (answerCorrect) {
                         console.log('critical');
-                        attackMob(battleMob, 'critical');
+                        attackMob(battleMob, true);
                     } else {
-                        attackMob(battleMob, 'normal');
+                        attackMob(battleMob, false);
                     }
                 }
                 if (curAction == actions[1]) {
-                    if (ansOptIndex == indexOfAns) {
+                    if (answerCorrect) {
                         console.log('critical');
-                        magicMob(player, battleMob, 'critical');
+                        magicMob(player, battleMob, true);
                     } else {
-                        magicMob(player, battleMob, 'normal');
+                        magicMob(player, battleMob, false);
                     }
                 }
+                qnEnd = Date.now();
+                save_progress(subject, op, qn, ans, ansOptSelected, answerCorrect, qnEnd - qnStart);
                 displayQn = false;
             }
         } else {
@@ -1273,21 +1384,23 @@ window.addEventListener("touchstart", function(e) {
     }
 }, { passive: false })
 
-function save_progress() {
-    var today = new Date()
+function save_progress(sub, op, qn, ans, ansChosen, result, duration) {
+    progressObj = {
+        subject: sub,
+        result: result,
+        operation: op,
+        question: qn,
+        correctAnswer: ans,
+        ansChosen: ansChosen,
+        duration: duration,
+    }
+    console.log('progress obj created');
     fetch('/save_progress', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-            // subject: subject,
-            qnId: qnId,
-            result: result,
-            answerTxt: answerTxt,
-            answerPic: answerPic,
-            duration: duration,
-        }),
+        body: JSON.stringify(progressObj),
     });
     console.log("progress saved");
 }
@@ -1326,7 +1439,7 @@ function retrieve_characters() {
         .then(function(char) {
             console.log('char_obj retrieved from server')
             console.log("char id: " + char.id)
-            console.log("char detail: " + char.character);
+                // console.log("char detail: " + char.character);
             var character = JSON.parse(char.character);
             character.id = char.id;
             match_char_attributes(player, character);
@@ -1350,7 +1463,7 @@ function match_char_attributes(char, saved_char) {
     char.maxHp = saved_char.maxHp;
     char.maxMp = saved_char.maxMp;
     char.curHp = saved_char.curHp;
-    char.curMp = saved_char.maxMp;
+    char.curMp = saved_char.curMp;
     char.maxExp = saved_char.maxExp;
     char.curExp = saved_char.curExp;
     char.atk = saved_char.atk;

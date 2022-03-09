@@ -1,3 +1,4 @@
+from email.policy import default
 from sqlalchemy import false
 from myPortfolio import db, login_manager
 from datetime import datetime
@@ -55,3 +56,15 @@ class Question(db.Model):
     qn_pic_repeatable = db.Column(db.Boolean, nullable=True)
     ans = db.Column(db.String(), nullable=False)
     ans_pic = db.Column(db.String(20), nullable=True)
+
+class Progress(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    child_id = db.Column(db.Integer, db.ForeignKey('child.id'), nullable=False)
+    date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    subject = db.Column(db.String(3), nullable=False)
+    result = db.Column(db.Boolean, nullable=False)
+    operation = db.Column(db.String(), nullable=False)
+    question = db.Column(db.String(), nullable=False)
+    correct_ans = db.Column(db.String(), nullable=False)
+    ans_chosen = db.Column(db.String(), nullable=False)
+    duration = db.Column(db.Integer, nullable=False)
