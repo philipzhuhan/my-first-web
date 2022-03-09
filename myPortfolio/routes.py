@@ -191,6 +191,8 @@ def view(id):
             if user.role == 'child':
                 child = Child.query.filter_by(id=user.id).first()
                 if current_user.id == child.parent_id:
+                    progressRecord = []
+                    progressList = Progress.query.filter_by(child_id=child.id).all()
                     childObj = {
                         'id': user.id,
                         'parent_id': current_user.id,
@@ -199,7 +201,19 @@ def view(id):
                         'date_joined': user.date_joined,
                         'image_file': url_for('static', filename='img/profile_pics/' + user.image_file),
                     }
-                    return render_template('view-child.html', title='Child Detail', child=childObj)
+                    for progress in progressList:
+                        progressObj = {
+                            'date': progress.date,
+                            'subject': progress.subject,
+                            'operation': progress.operation,
+                            'question': progress.question,
+                            'correct_ans': progress.correct_ans,
+                            'ans_chosen': progress.ans_chosen,
+                            'result': progress.result,
+                            'duration': progress.duration,
+                        }
+                        progressRecord.append(progressObj)
+                    return render_template('view-child.html', title='Child Detail', child=childObj, progress=progressRecord)
     else:
         return redirect(url_for('home'))
 
@@ -257,8 +271,6 @@ def save_character():
         today = datetime.today()
         id = req["id"]
         character = req["character"]
-        print('obtained json object')
-        print(id)
         if id == -1:
             char = Game_Character_Save(child_id=current_user.id, game_character=character, save_date=today)
             db.session.add(char)

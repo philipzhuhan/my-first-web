@@ -15,5 +15,31 @@
                 </tr>
             </table>
         </div>
+        <div class="media-body">
+            <table class="table">
+                <tr>
+                    <th>Date</th>
+                    <th>Subject</th>
+                    <th>Operation</th>
+                    <th>Question</th>
+                    <th>Correct Ans</th>
+                    <th>Ans Chosen</th>
+                    <th>Result</th>
+                    <th>Duration</th>
+                </tr>
+                {% for prog in progress %}
+                    <tr>
+                        <th>{{ prog.date }}</th>
+                        <th>{{ prog.subject }}</th>
+                        <th>{{ prog.operation }}</th>
+                        <th>{{ prog.question }}</th>
+                        <th>{{ prog.correct_ans }}</th>
+                        <th>{{ prog.ans_chosen }}</th>
+                        <th>{{ prog.result }}</th>
+                        <th>{{ prog.duration }}</th>
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
     </div>
 {% endblock content %}
