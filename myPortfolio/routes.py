@@ -242,6 +242,12 @@ def load_characters():
             print(char_object['id'])
             print(char_object['character'])
             return jsonify(char_object)
+        else:
+            char_object = {
+                'id': -1,
+                'character': -1,
+            }
+            return jsonify(char_object)
 
 @app.route("/game/save_character", methods=['GET', 'POST'])
 @login_required
@@ -253,7 +259,6 @@ def save_character():
         character = req["character"]
         print('obtained json object')
         print(id)
-        print(character)
         if id == -1:
             char = Game_Character_Save(child_id=current_user.id, game_character=character, save_date=today)
             db.session.add(char)

@@ -554,12 +554,12 @@ function startAnimating(fps) {
     player = new Player(canvas.width / 2, canvas.height / 2, playerW, playerH);
     // load from save if there's existing character saved
     retrieve_characters();
-    if (savedCharacters.length > 0) {
-        match_char_attributes(player, savedCharacters[0]);
-        console.log("saved character loaded");
-    } else {
-        console.log("no saved character loaded, new character created");
-    }
+    // if (savedCharacters.length > 0) {
+    //     match_char_attributes(player, savedCharacters[0]);
+    //     console.log("saved character loaded");
+    // } else {
+    //     console.log("no saved character loaded, new character created");
+    // }
     // initialize mobs
     initMobs();
 
@@ -1072,7 +1072,6 @@ window.addEventListener("keydown", function(e) {
         player.moving = true;
         if (e.key == "=") {
             save_character(player);
-            // retrieve_characters();
         }
     }
     if (curGameState === gameStates[1]) {
@@ -1440,19 +1439,23 @@ function retrieve_characters() {
             console.log('char_obj retrieved from server')
             console.log("char id: " + char.id)
                 // console.log("char detail: " + char.character);
-            var character = JSON.parse(char.character);
-            character.id = char.id;
-            match_char_attributes(player, character);
-            console.log("char ID after match: " + String(player.id));
+            if (char.id == -1) {
+                console.log("NO Saved Char Loaded")
+            } else {
+                var character = JSON.parse(char.character);
+                character.id = char.id;
+                match_char_attributes(player, character);
+                console.log("Char Loaded with char ID: " + String(player.id));
+            }
         })
         .catch(error => console.log('ERROR LOAD CHARACTERS: ' + error))
 
-    if (savedCharacters.length > 0) {
-        console.log("saved char loaded: ");
-        console.log(savedCharacters);
-    } else {
-        console.log("no saved char loaded");
-    }
+    // if (savedCharacters.length > 0) {
+    //     console.log("saved char loaded: ");
+    //     console.log(savedCharacters);
+    // } else {
+    //     console.log("no saved char loaded");
+    // }
 }
 
 function match_char_attributes(char, saved_char) {
