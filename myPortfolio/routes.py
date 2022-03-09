@@ -255,7 +255,7 @@ def save_character():
     if current_user.role == 'child':
         req = request.get_json()
         today = datetime.today()
-        id = int(req["id"])
+        id = req["id"]
         character = req["character"]
         print('obtained json object')
         print(id)
@@ -264,9 +264,9 @@ def save_character():
             db.session.add(char)
         else:
             char = Game_Character_Save.query.filter_by(id=id).first()
-            if today > char.save_date:
-                char.game_character = character
-                char.save_date = today
+            # print(char)
+            char.game_character = character
+            char.save_date = today
         db.session.commit()
         return 'OK'
 
