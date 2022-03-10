@@ -55,6 +55,7 @@ let touchDetected = false;
 let touchRotateRadians;
 let touchArrowW, touchArrowH;
 
+let body = document.body;
 let canvas, ctx;
 const isMobile = ('ontouchstart' in document.documentElement && navigator.userAgent.match(/Mobi/));
 
@@ -113,7 +114,9 @@ class Player {
         this.y = y;
         this.width = width;
         this.height = this.width / this.srcFrameW * this.srcFrameH;
-        this.speed = this.width / 3;
+        if (curGameState == gameStates[0]) {
+            this.speed = this.width / 3;
+        }
 
         this.hpBarX = this.x;
         this.hpBarY = this.y + this.height;
@@ -200,6 +203,17 @@ class Player {
         this.frameY = 1;
         this.moving = true;
         this.speed = 0;
+
+        this.hpBarX = this.x;
+        this.hpBarY = this.y + this.height;
+        this.hpBarW = this.width;
+        this.hpBarH = this.height * 0.1;
+        this.curHpBarW = this.curHp / this.maxHp * this.hpBarW;
+        this.mpBarX = this.x;
+        this.mpBarY = this.hpBarY + this.hpBarH;
+        this.mpBarW = this.width;
+        this.mpBarH = this.height * 0.1;
+        this.curMpBarW = this.curMp / this.maxMp * this.mpBarW;
     }
 
     disEngageBattle(width) {
@@ -209,6 +223,17 @@ class Player {
         this.height = this.width / this.srcFrameW * this.srcFrameH;
         this.moving = false;
         this.speed = this.width / 3;
+
+        this.hpBarX = this.x;
+        this.hpBarY = this.y + this.height;
+        this.hpBarW = this.width;
+        this.hpBarH = this.height * 0.1;
+        this.curHpBarW = this.curHp / this.maxHp * this.hpBarW;
+        this.mpBarX = this.x;
+        this.mpBarY = this.hpBarY + this.hpBarH;
+        this.mpBarW = this.width;
+        this.mpBarH = this.height * 0.1;
+        this.curMpBarW = this.curMp / this.maxMp * this.mpBarW;
     }
 
     levelUp() {
@@ -302,8 +327,10 @@ class Mob {
         this.y = mobY;
         this.width = mobW;
         this.height = this.width / this.srcFrameW * this.srcFrameH;
-        this.speed = this.width / 10;
-        this.moveLimit = this.width * 2;
+        if (curGameState == gameStates[0]) {
+            this.speed = this.width / 10;
+            this.moveLimit = this.width * 2;
+        }
 
         // display level
         this.lvlW = this.width;
@@ -389,21 +416,21 @@ class Mob {
                     }
                 }
             }
-
-            if (this.frameX < 7 && this.moving) this.frameX++
-                else this.frameX = 0;
-
-            this.hpBarX = this.x;
-            this.hpBarY = this.y + this.height;
-            this.hpBarW = this.width;
-            this.hpBarH = this.height * 0.1;
-            this.curHpBarW = this.curHp / this.maxHp * this.hpBarW;
-            this.mpBarX = this.x;
-            this.mpBarY = this.hpBarY + this.hpBarH;
-            this.mpBarW = this.width;
-            this.mpBarH = this.height * 0.1;
-            this.curMpBarW = this.curMp / this.maxMp * this.mpBarW;
         }
+        if (this.frameX < 7 && this.moving) this.frameX++
+            else this.frameX = 0;
+
+        this.hpBarX = this.x;
+        this.hpBarY = this.y + this.height;
+        this.hpBarW = this.width;
+        this.hpBarH = this.height * 0.1;
+        this.curHpBarW = this.curHp / this.maxHp * this.hpBarW;
+        this.mpBarX = this.x;
+        this.mpBarY = this.hpBarY + this.hpBarH;
+        this.mpBarW = this.width;
+        this.mpBarH = this.height * 0.1;
+        this.curMpBarW = this.curMp / this.maxMp * this.mpBarW;
+
     }
 
     engageBattle(x, y, width) {
@@ -415,6 +442,26 @@ class Mob {
         this.frameY = 0;
         this.moving = true;
         this.speed = 0;
+
+        // display level
+        this.lvlW = this.width;
+        this.lvlH = this.height * 0.3;
+        this.lvlX = this.x + this.lvlW / 3;
+        this.lvlY = this.y - this.height * 0.3 + this.lvlH;
+
+        this.lvlFontSize = this.lvlH * 0.8;
+        this.fontStyle = this.lvlFontSize + "px Arial";
+        // display hp / mp
+        this.hpBarX = this.x;
+        this.hpBarY = this.y + this.height;
+        this.hpBarW = this.width;
+        this.hpBarH = this.height * 0.1;
+        this.curHpBarW = this.curHp / this.maxHp * this.hpBarW;
+        this.mpBarX = this.x;
+        this.mpBarY = this.hpBarY + this.hpBarH;
+        this.mpBarW = this.width;
+        this.mpBarH = this.height * 0.1;
+        this.curMpBarW = this.curMp / this.maxMp * this.mpBarW;
     }
 
     disEngageBattle(width) {
@@ -428,6 +475,26 @@ class Mob {
         this.moving = true;
         this.speed = this.width / 10;
         this.moveLimit = this.width * 2;
+
+        // display level
+        this.lvlW = this.width;
+        this.lvlH = this.height * 0.3;
+        this.lvlX = this.x + this.lvlW / 3;
+        this.lvlY = this.y - this.height * 0.3 + this.lvlH;
+
+        this.lvlFontSize = this.lvlH * 0.8;
+        this.fontStyle = this.lvlFontSize + "px Arial";
+        // display hp / mp
+        this.hpBarX = this.x;
+        this.hpBarY = this.y + this.height;
+        this.hpBarW = this.width;
+        this.hpBarH = this.height * 0.1;
+        this.curHpBarW = this.curHp / this.maxHp * this.hpBarW;
+        this.mpBarX = this.x;
+        this.mpBarY = this.hpBarY + this.hpBarH;
+        this.mpBarW = this.width;
+        this.mpBarH = this.height * 0.1;
+        this.curMpBarW = this.curMp / this.maxMp * this.mpBarW;
     }
 }
 
@@ -493,6 +560,7 @@ function startAnimating(fps) {
     canvas.width = vpWidth;
     canvas.height = vpHeight;
     ctx = canvas.getContext("2d");
+    body.style.margin = 0;
     document.body.insertBefore(canvas, document.body.childNodes[0]);
     background.src = exploreMap.src;
     cursor.src = cursorImg.src;
@@ -512,12 +580,6 @@ function startAnimating(fps) {
     player = new Player(canvas.width / 2, canvas.height / 2, playerW, playerH);
     // load from save if there's existing character saved
     retrieve_characters();
-    // if (savedCharacters.length > 0) {
-    //     match_char_attributes(player, savedCharacters[0]);
-    //     console.log("saved character loaded");
-    // } else {
-    //     console.log("no saved character loaded, new character created");
-    // }
     // initialize mobs
     initMobs();
 
@@ -536,14 +598,6 @@ function startAnimating(fps) {
     helpY = canvas.height * 0.05;
     helpW = canvas.width * 0.04;
     helpH = helpW / helpImg.width / helpImg.height;
-    // adjustView();
-    // map.width = vpWidth;
-    // map.height = vpHeight;
-    // objects.push(map);
-    // player.width = vpWidth * 0.05;
-    // player.height = player.width / player.src.srcFrameW * player.src.srcFrameH;
-    // objects.push(player);
-    // initMobs();
 
     animate();
 }
@@ -563,6 +617,14 @@ function animate() {
         ctx.imageSmoothingEnabled = false;
         if (curGameState === gameStates[0]) {
             // explore state
+            drawBackground();
+            for (i = 0; i < mobs.length; i++) {
+                mobs[i].draw(ctx);
+            }
+            player.draw(ctx);
+            if (isMobile && touchDetected) {
+                drawTouchArrow();
+            }
             player.move();
             for (i = 0; i < mobs.length; i++) {
                 mobs[i].move();
@@ -575,9 +637,9 @@ function animate() {
                     curAction = actions[curActionIndex];
                     initiate_action_box();
                     var playerX, playerY, playerW, mobX, mobY, mobW;
-                    playerW = canvas.height / 4;
-                    playerX = canvas.width / 4 - playerW / 2;
-                    playerY = canvas.height / 3 - playerW / player.srcFrameW * player.srcFrameH / 2;
+                    playerW = canvas.width / 4;
+                    playerX = canvas.width / 4 - playerW / 2; // player x pos is at 1/4 of the screen width
+                    playerY = canvas.height / 3 - playerW / player.srcFrameW * player.srcFrameH / 2; // player y pos is at 1/3 of the screen height
                     player.engageBattle(playerX, playerY, playerW);
                     mobW = canvas.height / 4;
                     mobX = canvas.width / 4 * 3 - mobW / 2;
@@ -585,14 +647,6 @@ function animate() {
                     battleMob.engageBattle(mobX, mobY, mobW);
                     console.log("engaging battle");
                 }
-            }
-            drawBackground();
-            for (i = 0; i < mobs.length; i++) {
-                mobs[i].draw(ctx);
-            }
-            player.draw(ctx);
-            if (isMobile && touchDetected) {
-                drawTouchArrow();
             }
         }
         if (curGameState === gameStates[1]) {
@@ -602,10 +656,10 @@ function animate() {
             if (!isMobile) {
                 drawCursor();
             }
-            player.move();
-            battleMob.move();
             player.draw(ctx);
             battleMob.draw(ctx);
+            player.move();
+            battleMob.move();
         }
         drawSaveIcon();
         drawCharInfo();
@@ -616,7 +670,6 @@ function animate() {
 function drawHelp() {
     var txtSize, txtStyle;
     if (displayHelp == false) {
-        // console.log('draw ?');
         help.src = helpImg.src;
         ctx.drawImage(help, helpX, helpY, helpW, helpH);
     } else {
@@ -663,7 +716,6 @@ function drawHelp() {
 function drawCharInfo() {
     var txtSize, txtStyle;
     if (displayCharInfo == false) {
-        // console.log('draw ?');
         charIcon.src = charIconImg.src;
         ctx.drawImage(charIcon, charInfoX, charInfoY, charInfoW, charInfoH);
     } else {
@@ -702,7 +754,6 @@ function drawSaveIcon() {
 }
 
 function initiate_action_box() {
-    console.log('initiate action box');
     displayQn = false; // display action choices, not display questions
     curActionIndex = 0;
     curAction = actions[curActionIndex]; // default action to point at first option
@@ -764,8 +815,6 @@ function generateQn(opr, range) {
         }
     }
     qnStart = Date.now();
-    console.log('generated new question with operation: ' + op + ', and answer: ' + ans + ' at index: ' + indexOfAns);
-    console.log('answers generated: ' + ans);
 }
 
 function createQnBox() {
@@ -819,6 +868,11 @@ function drawActionsBox() {
         }
         for (i = 0; i < ansOpts.length; i++) {
             // draw options on the 1/3 right portion of Action Box
+            // highlight box selected by player with yellow background
+            if (i == ansOptIndex) {
+                ctx.fillStyle = "yellow";
+                ctx.fillRect(optX, optY + optH * i, optW, optH);
+            }
             // draw option button outline
             ctx.lineWidth = "1";
             ctx.strokeStyle = "blue";
@@ -845,8 +899,48 @@ function drawActionsBox() {
             ctx.rect(actionBoxX + actionOptionBoxW * i, actionBoxY, actionOptionBoxW, actionOptionBoxH);
             ctx.stroke();
             ctx.fillStyle = "black";
+            ctx.font = actionBoxTxtFontStyle;
             ctx.fillText(actions[i], actionBoxX + actionOptionBoxW * 0.1 + actionOptionBoxW * i, actionBoxY + actionBoxTxtSize, actionOptionBoxW);
         }
+    }
+}
+
+function reviewActionBox() {
+    // initiate Action box element dimentions
+    actionBoxX = 0;
+    actionBoxW = canvas.width;
+    actionBoxH = canvas.height * 0.3;
+    actionBoxY = canvas.height * 0.7;
+
+    // initiate cursor
+    cursorX = actionBoxX + actionOptionBoxW / 2;
+    cursorY = actionBoxY + actionOptionBoxH / 2;
+    cursorW = actionOptionBoxW / 3;
+    cursorH = cursorW / cursorImg.width * cursorImg.height;
+
+    if (displayQn == true) {
+        qnBoxX = actionBoxX;
+        qnBoxY = actionBoxY;
+        qnBoxW = actionBoxW / 3 * 2;
+        qnBoxH = actionBoxH / 3;
+        qnTxtSize = qnBoxH / 3;
+        qnTxtFontStyle = qnTxtSize + "px " + txtStyle;
+        qnTxtX = qnBoxX + qnTxtSize;
+        qnTxtY = qnBoxY + qnTxtSize * 2;
+        optX = qnBoxX + qnBoxW;
+        optY = qnBoxY;
+        optW = qnBoxW / 2;
+        optH = actionBoxH / 4;
+        optTxtSize = optH / 3;
+        optTxtFontStyle = optTxtSize + "px " + txtStyle;
+        optTxtX = optX + optTxtSize * 2;
+        optTxtY = optY + optTxtSize * 2;
+    } else {
+        actionOptionBoxH = actionBoxH;
+        actionOptionBoxW = actionBoxW / actions.length;
+        actionBoxTxtSize = actionOptionBoxH * 0.3;
+        actionBoxTxtStyle = "Arial";
+        actionBoxTxtFontStyle = actionBoxTxtSize + "px " + actionBoxTxtStyle;
     }
 }
 
@@ -859,35 +953,57 @@ function adjustView() {
 
     // review player position and size
     var playerXPerc, playerYPerc, playerX, playerY, playerW;
-    playerXPerc = player.x / originW;
-    playerYPerc = player.y / originH;
-    if (vpWidth > vpHeight) {
-        playerW = vpWidth * 0.05;
-    } else {
-        playerW = vpHeight * 0.05 / player.srcFrameH * player.srcFrameW;
-    }
-    playerX = vpWidth * playerXPerc;
-    playerY = vpHeight * playerYPerc;
-    player.review(playerX, playerY, playerW);
-
-    // review mobs position and size
-    for (i = 0; i < mobs.length; i++) {
-        var mobInitXPerc, mobInitYPerc, mobXPerc, mobYPerc, mobInitX, mobInitY, mobX, mobY, mobW;
-        mobInitXPerc = mobs[i].initX / originW;
-        mobInitYPerc = mobs[i].initY / originH;
-        mobXPerc = mobs[i].x / originW;
-        mobYPerc = mobs[i].y / originH;
+    if (curGameState == gameStates[0]) {
+        playerXPerc = player.x / originW;
+        playerYPerc = player.y / originH;
         if (vpWidth > vpHeight) {
-            mobW = vpWidth * 0.05;
+            playerW = vpWidth * 0.05;
         } else {
-            mobW = vpHeight * 0.05 / player.srcFrameH * player.srcFrameW;
+            playerW = vpHeight * 0.05 / player.srcFrameH * player.srcFrameW;
         }
+        playerX = vpWidth * playerXPerc;
+        playerY = vpHeight * playerYPerc;
+        player.review(playerX, playerY, playerW);
+
+        // review mobs position and size
+        for (i = 0; i < mobs.length; i++) {
+            var mobInitXPerc, mobInitYPerc, mobXPerc, mobYPerc, mobInitX, mobInitY, mobX, mobY, mobW;
+            mobInitXPerc = mobs[i].initX / originW;
+            mobInitYPerc = mobs[i].initY / originH;
+            mobXPerc = mobs[i].x / originW;
+            mobYPerc = mobs[i].y / originH;
+            if (vpWidth > vpHeight) {
+                mobW = vpWidth * 0.05;
+            } else {
+                mobW = vpHeight * 0.05 / mobs[i].srcFrameH * mobs[i].srcFrameW;
+            }
+            mobInitX = vpWidth * mobInitXPerc;
+            mobInitY = vpHeight * mobInitYPerc;
+            mobX = vpWidth * mobXPerc;
+            mobY = vpHeight * mobYPerc;
+            mobs[i].review(mobInitX, mobInitY, mobX, mobY, mobW);
+        }
+    }
+    if (curGameState == gameStates[1]) {
+        playerW = vpWidth / 4;
+        playerX = vpWidth / 4 - playerW / 2;
+        playerY = vpHeight / 3 - playerW / player.srcFrameW * player.srcFrameH / 2;
+        player.review(playerX, playerY, playerW)
+            // review battle mob
+        mobInitXPerc = battleMob.initX / originW;
+        mobInitYPerc = battleMob.initY / originH;
         mobInitX = vpWidth * mobInitXPerc;
         mobInitY = vpHeight * mobInitYPerc;
-        mobX = vpWidth * mobXPerc;
-        mobY = vpHeight * mobYPerc;
-        mobs[i].review(mobInitX, mobInitY, mobX, mobY, mobW);
+        mobW = vpWidth / 4;
+        mobX = vpWidth / 4 * 3 - mobW / 2;
+        mobY = vpHeight / 3 - mobW / battleMob.srcFrameW * battleMob.srcFrameH / 2;
+        battleMob.review(mobInitX, mobInitY, mobX, mobY, mobW);
+
+        // review action box below
+        reviewActionBox();
+        // review action box above
     }
+
 
     canvas.width = vpWidth;
     canvas.height = vpHeight;
@@ -907,90 +1023,6 @@ function adjustView() {
     helpW = canvas.width * 0.03;
     helpH = canvas.height * 0.03;
 }
-
-// function adjustView() {
-//     var newOrientation = (screen.orientation || {}).type || screen.mozOrientation || screen.msOrientation;
-//     var originW = canvas.width;
-//     var originH = canvas.height;
-//     vpWidth = document.documentElement.clientWidth;
-//     vpHeight = document.documentElement.clientHeight;
-//     var mapW, mapH;
-
-//     if (isMobile) {
-//         if (newOrientation != screenOrientation) {
-//             console.log("screen orientation changed to: " + newOrientation);
-//             canvas.width = vpWidth;
-//             canvas.height = vpHeight;
-//             player.changeOrientation(newOrientation, originW, originH, canvas.width, canvas.height);
-//             if (screenOrientation == 'portrait-primary' || screenOrientation == 'portrait-secondary') {
-//                 playerH = canvas.height * 0.05;
-//                 playerW = playerH / 150 * 115;
-//             } else {
-//                 playerW = canvas.width * 0.05;
-//                 playerH = playerW / 115 * 150;
-//             }
-//             player.resize(playerW, playerH);
-//             for (i = 0; i < mobs.length; i++) {
-//                 mobs[i].changeOrientation(newOrientation, originW, originH, canvas.width, canvas.height);
-//                 mobs[i].resize(canvas.width * 0.05);
-//             }
-//             screenOrientation = newOrientation;
-//         } else {
-//             mapW = exploreMap.width;
-//             mapH = exploreMap.height;
-//             // canvas should be mapW * mapH scale
-//             if (vpWidth / vpHeight <= mapW / mapH) {
-//                 canvas.width = vpWidth;
-//                 canvas.height = canvas.width * mapH / mapW;
-//             } else {
-//                 canvas.height = vpHeight;
-//                 canvas.width = canvas.height * mapW / mapH;
-//             }
-//             var factor = canvas.width / originW;
-//             player.scale(factor);
-//             for (i = 0; i < mobs.length; i++) {
-//                 mobs[i].scale(factor);
-//             }
-//             if (curGameState == gameStates[1]) {
-//                 battleMob.scale(factor);
-//             }
-//         }
-//     } else {
-//         mapW = exploreMap.width;
-//         mapH = exploreMap.height;
-//         // canvas should be mapW * mapH scale
-//         if (vpWidth / vpHeight <= mapW / mapH) {
-//             canvas.width = vpWidth;
-//             canvas.height = canvas.width * mapH / mapW;
-//         } else {
-//             canvas.height = vpHeight;
-//             canvas.width = canvas.height * mapW / mapH;
-//         }
-//         var factor = canvas.width / originW;
-//         player.scale(factor);
-//         for (i = 0; i < mobs.length; i++) {
-//             mobs[i].scale(factor);
-//         }
-//         if (curGameState == gameStates[1]) {
-//             battleMob.scale(factor);
-//         }
-//     }
-//     // resize save icon
-//     saveX = canvas.width * 0.85;
-//     saveY = canvas.height * 0.05;
-//     saveW = canvas.width * 0.03;
-//     saveH = canvas.height * 0.03;
-//     // resize char info icon
-//     charInfoX = canvas.width * 0.9;
-//     charInfoY = canvas.height * 0.05;
-//     charInfoW = canvas.width * 0.03;
-//     charInfoH = canvas.height * 0.03;
-//     // resize question mark
-//     helpX = canvas.width * 0.95;
-//     helpY = canvas.height * 0.05;
-//     helpW = canvas.width * 0.03;
-//     helpH = canvas.height * 0.03;
-// }
 
 function drawBackground() {
     ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
@@ -1056,6 +1088,7 @@ function attackMob(mob, isCritical) {
         player.addExp(exp);
         player.disEngageBattle(canvas.width * 0.05);
         displayQn = false;
+        resetKeys();
         curGameState = gameStates[0];
     }
 }
@@ -1074,8 +1107,16 @@ function magicMob(mob, isCritical) {
         player.addExp(exp);
         player.disEngageBattle(canvas.width * 0.05);
         displayQn = false;
+        resetKeys();
         curGameState = gameStates[0];
     }
+}
+
+function resetKeys() {
+    keys["ArrowRight"] = false;
+    keys["ArrowLeft"] = false;
+    keys["ArrowDown"] = false;
+    keys["ArrowUp"] = false;
 }
 
 window.addEventListener("keydown", function(e) {
@@ -1185,7 +1226,6 @@ window.addEventListener("keydown", function(e) {
     }
 });
 
-
 window.addEventListener("keyup", function(e) {
     keys[e.key] = false;
     if (curGameState === 'Explore') {
@@ -1193,38 +1233,171 @@ window.addEventListener("keyup", function(e) {
     }
 })
 
-var touch, firstTouchX, firstTouchY, touchMoveX, touchMoveY;
+var touch, firstTouchX, firstTouchY, touchEndX, touchEndY;
 var trackMove = false;
+
+function chooseAnsOption(e) {
+    touchEndX = e.touches[0].clientX;
+    touchEndY = e.touches[0].clientY;
+    if (touchEndX > optX && touchEndY > optY) {
+        if (touchEndY < optY + optH) {
+            // first option
+            ansOptIndex = 0;
+        }
+        if (touchEndY >= optY + optH && touchEndY < optY + optH * 2) {
+            // second option
+            ansOptIndex = 1;
+        }
+        if (touchEndY >= optY + optH * 2 && touchEndY < optY + optH * 3) {
+            // second option
+            ansOptIndex = 2;
+        }
+        if (touchEndY >= optY + optH * 3 && touchEndY < optY + optH * 4) {
+            // second option
+            ansOptIndex = 3;
+        }
+    }
+    window.addEventListener("touchend", selectOption);
+}
+
+function selectOption(e) {
+    window.removeEventListener("touchmove", trackTouchMove);
+    if (touchEndX > optX && touchEndY > optY) {
+        if (touchEndY < optY + optH) {
+            // first option
+            ansOptIndex = 0;
+        }
+        if (touchEndY >= optY + optH && touchEndY < optY + optH * 2) {
+            // second option
+            ansOptIndex = 1;
+        }
+        if (touchEndY >= optY + optH * 2 && touchEndY < optY + optH * 3) {
+            // second option
+            ansOptIndex = 2;
+        }
+        if (touchEndY >= optY + optH * 3 && touchEndY < optY + optH * 4) {
+            // second option
+            ansOptIndex = 3;
+        }
+        ansOptSelected = ansOpts[ansOptIndex];
+        // validate answer option vs correct index
+        answerCorrect = ansOptIndex == indexOfAns;
+        if (curAction == actions[0]) {
+            if (answerCorrect) {
+                console.log('critical');
+                attackMob(battleMob, true);
+            } else {
+                attackMob(battleMob, false);
+            }
+        }
+        if (curAction == actions[1]) {
+            if (answerCorrect) {
+                console.log('critical');
+                magicMob(player, battleMob, true);
+            } else {
+                magicMob(player, battleMob, false);
+            }
+        }
+        qnEnd = Date.now();
+        save_progress(subject, op, qn, ans, ansOptSelected, answerCorrect, qnEnd - qnStart);
+        displayQn = false;
+    }
+    window.removeEventListener("touchend", selectOption);
+}
+
+function chooseActionOption(e) {
+    touchEndX = e.touches[0].clientX;
+    touchEndY = e.touches[0].clientY;
+
+    if (touchEndY > actionBoxY) {
+        if (touchEndX < actionOptionBoxW) {
+            // Attack is clicked
+            curActionIndex = 0;
+        }
+        if (touchEndX >= actionOptionBoxW && touchEndX < actionOptionBoxW * 2) {
+            curActionIndex = 1;
+        }
+        if (touchEndX >= actionOptionBoxW * 2) {
+            // escape is selected
+            // cur displaying action selection, return to explore state
+            curActionIndex = 2;
+        }
+    }
+    window.addEventListener("touchend", selectAction);
+}
+
+function selectAction(e) {
+    window.removeEventListener("touchmove", chooseActionOption);
+    if (touchEndY > actionBoxY) {
+        if (touchEndX < actionOptionBoxW) {
+            // Attack is clicked
+            curActionIndex = 0;
+        }
+        if (touchEndX >= actionOptionBoxW && touchEndX < actionOptionBoxW * 2) {
+            curActionIndex = 1;
+        }
+        if (touchEndX >= actionOptionBoxW * 2) {
+            // escape is selected
+            // cur displaying action selection, return to explore state
+            curActionIndex = 2;
+        }
+        curAction = actions[curActionIndex];
+
+        if (curActionIndex == 0 || curActionIndex == 1) {
+            // atk or magic is selected
+            createQnBox();
+            displayQn = true;
+        }
+        if (curActionIndex == 2) {
+            // escape is selected
+            player.disEngageBattle(canvas.width * 0.05);
+            battleMob.disEngageBattle(canvas.width * 0.05);
+            mobs.push(battleMob);
+            resetKeys();
+            curGameState = gameStates[0];
+        }
+    }
+    window.removeEventListener("touchend", selectAction);
+}
 
 function trackTouchMove(e) {
     touchDetected = true;
-    touchMoveX = e.touches[0].clientX - firstTouchX;
-    touchMoveY = e.touches[0].clientY - firstTouchY;
+    touchEndX = e.touches[0].clientX - firstTouchX;
+    touchEndY = e.touches[0].clientY - firstTouchY;
     touchArrowW = canvas.width * 0.1;
     touchArrowH = touchArrowW / touchArrowImg.width * touchArrowImg.height;
-    if (touchMoveX > 0) {
-        touchRotateRadians = Math.atan(touchMoveY / touchMoveX);
+    if (touchEndX > 0) {
+        touchRotateRadians = Math.atan(touchEndY / touchEndX);
     } else {
-        touchRotateRadians = Math.atan(touchMoveY / touchMoveX) + 2;
+        touchRotateRadians = Math.atan(touchEndY / touchEndX) + 2;
     }
 
     if (curGameState === gameStates[0] && trackMove == true) {
         player.moving = true;
-        if (touchMoveX > 0) {
+        if (touchEndX > 0) {
             keys["ArrowLeft"] = false;
             keys["ArrowRight"] = true;
         }
-        if (touchMoveX < 0) {
+        if (touchEndX < 0) {
             keys["ArrowLeft"] = true;
             keys["ArrowRight"] = false;
         }
-        if (touchMoveY > 0) {
+        if (touchEndY > 0) {
             keys["ArrowUp"] = false;
             keys["ArrowDown"] = true;
         }
-        if (touchMoveY < 0) {
+        if (touchEndY < 0) {
             keys["ArrowUp"] = true;
             keys["ArrowDown"] = false;
+        }
+    }
+
+    if (curGameState === gameStates[1]) {
+        if (displayQn === true) {
+            touchEndX = e.touches[0].clientX;
+            touchEndY = e.touches[0].clientY;
+
+
         }
     }
 }
@@ -1237,60 +1410,23 @@ function drawTouchArrow() {
     ctx.translate(-firstTouchX, -firstTouchY);
 }
 
-function trackMouseMove(e) {
-    var mouseMoveX = e.pageX - firstTouchX;
-    var mouseMoveY = e.pageY - firstTouchY;
-
-    if (curGameState === gameStates[0] && trackMove == true) {
-        player.moving = true;
-        if (mouseMoveX > 0) {
-            keys["ArrowLeft"] = false;
-            keys["ArrowRight"] = true;
-        }
-        if (mouseMoveX < 0) {
-            keys["ArrowLeft"] = true;
-            keys["ArrowRight"] = false;
-        }
-        if (mouseMoveY > 0) {
-            keys["ArrowUp"] = false;
-            keys["ArrowDown"] = true;
-        }
-        if (mouseMoveY < 0) {
-            keys["ArrowUp"] = true;
-            keys["ArrowDown"] = false;
-        }
-    }
-}
-
 function disableMove(e) {
     touchDetected = false;
-    window.removeEventListener("mousemove", trackMouseMove);
     window.removeEventListener("touchmove", trackTouchMove);
-    trackMove = false
-    player.moving = false;
-    keys["ArrowRight"] = false;
-    keys["ArrowLeft"] = false;
-    keys["ArrowDown"] = false;
-    keys["ArrowUp"] = false;
-    window.removeEventListener("mouseup", disableMove);
+    if (curGameState === gameStates[0]) {
+        trackMove = false
+        player.moving = false;
+        keys["ArrowRight"] = false;
+        keys["ArrowLeft"] = false;
+        keys["ArrowDown"] = false;
+        keys["ArrowUp"] = false;
+    }
     window.removeEventListener("touchend", disableMove);
 }
-
-window.addEventListener("mousedown", function(e) {
-    // e.preventDefault();
-    firstTouchX = e.pageX;
-    firstTouchY = e.pageY;
-    if (curGameState === gameStates[0]) {
-        trackMove = true;
-        window.addEventListener("mousemove", trackMouseMove);
-        window.addEventListener("mouseup", disableMove);
-    }
-})
 
 window.addEventListener("touchstart", function(e) {
     e.preventDefault();
     touch = e.touches[0];
-    // console.log(touch.pageX + ' / ' + touch.pageY);
     firstTouchX = touch.clientX;
     firstTouchY = touch.clientY;
     if (firstTouchX > helpX && firstTouchX < helpX + helpW && firstTouchY > helpY && firstTouchY < helpY + helpH) {
@@ -1325,6 +1461,8 @@ window.addEventListener("touchstart", function(e) {
         // click is in the save icon area
         save_character(player);
     }
+    touchEndX = firstTouchX;
+    touchEndY = firstTouchY;
     if (curGameState === gameStates[0]) {
         trackMove = true;
         window.addEventListener("touchmove", trackTouchMove);
@@ -1333,77 +1471,11 @@ window.addEventListener("touchstart", function(e) {
     if (curGameState === gameStates[1]) {
         // Battle state
         if (displayQn === true) {
-            // answer option selection
-            if (firstTouchX > optX && firstTouchY > optY) {
-                // touch within valid ans option select Y range
-                if (firstTouchY < optY + optH) {
-                    // first option
-                    ansOptIndex = 0;
-                }
-                if (firstTouchY >= optY + optH && firstTouchY < optY + optH * 2) {
-                    // second option
-                    ansOptIndex = 1;
-                }
-                if (firstTouchY >= optY + optH * 2 && firstTouchY < optY + optH * 3) {
-                    // second option
-                    ansOptIndex = 2;
-                }
-                if (firstTouchY >= optY + optH * 3 && firstTouchX < optY + optH * 4) {
-                    // second option
-                    ansOptIndex = 3;
-                }
-                console.log('answer option index selected: ' + ansOptIndex);
-                ansOptSelected = ansOpts[ansOptIndex];
-                // validate answer option vs correct index
-                answerCorrect = ansOptIndex == indexOfAns;
-                if (curAction == actions[0]) {
-                    if (answerCorrect) {
-                        console.log('critical');
-                        attackMob(battleMob, true);
-                    } else {
-                        attackMob(battleMob, false);
-                    }
-                }
-                if (curAction == actions[1]) {
-                    if (answerCorrect) {
-                        console.log('critical');
-                        magicMob(player, battleMob, true);
-                    } else {
-                        magicMob(player, battleMob, false);
-                    }
-                }
-                qnEnd = Date.now();
-                save_progress(subject, op, qn, ans, ansOptSelected, answerCorrect, qnEnd - qnStart);
-                displayQn = false;
-            }
+            window.addEventListener("touchmove", chooseAnsOption);
+            window.addEventListener("touchend", selectOption);
         } else {
-            console.log("click in action scene");
-            // action option selection
-            if (firstTouchY > actionBoxY) {
-                // within valid action option select Y range
-                if (firstTouchX < actionOptionBoxW) {
-                    // Attack is clicked
-                    curActionIndex = 0;
-                    curAction = actions[curActionIndex];
-                    createQnBox();
-                    displayQn = true;
-                }
-                if (firstTouchX >= actionOptionBoxW && firstTouchX < actionOptionBoxW * 2) {
-                    // Magic is clicked
-                    curActionIndex = 1;
-                    curAction = actions[curActionIndex];
-                    createQnBox();
-                    displayQn = true;
-                }
-                if (firstTouchX >= actionOptionBoxW * 2) {
-                    // escape is selected
-                    // cur displaying action selection, return to explore state
-                    curGameState = gameStates[0];
-                    player.disEngageBattle(canvas.width * 0.05);
-                    battleMob.disEngageBattle(canvas.width * 0.05);
-                    mobs.push(battleMob);
-                }
-            }
+            window.addEventListener("touchmove", chooseActionOption)
+            window.addEventListener("touchend", selectAction);
         }
     }
 }, { passive: false })
@@ -1418,7 +1490,6 @@ function save_progress(sub, op, qn, ans, ansChosen, result, duration) {
         ansChosen: ansChosen,
         duration: duration,
     }
-    console.log('progress obj created');
     fetch('/save_progress', {
         method: 'POST',
         headers: {
@@ -1426,16 +1497,13 @@ function save_progress(sub, op, qn, ans, ansChosen, result, duration) {
         },
         body: JSON.stringify(progressObj),
     });
-    console.log("progress saved");
 }
 
 function save_character(char) {
-    console.log(char.id);
     var char_object = {
         id: char.id,
         character: JSON.stringify(char),
     };
-    // console.log(char.id);
     fetch('/game/save_character', {
         method: 'POST',
         headers: {
@@ -1443,8 +1511,6 @@ function save_character(char) {
         },
         body: JSON.stringify(char_object),
     });
-    console.log("Character saved with char id: ")
-    console.log(char_object['id'])
     retrieve_characters();
 }
 
@@ -1474,13 +1540,6 @@ function retrieve_characters() {
             }
         })
         .catch(error => console.log('ERROR LOAD CHARACTERS: ' + error))
-
-    // if (savedCharacters.length > 0) {
-    //     console.log("saved char loaded: ");
-    //     console.log(savedCharacters);
-    // } else {
-    //     console.log("no saved char loaded");
-    // }
 }
 
 function match_char_attributes(char, saved_char) {
