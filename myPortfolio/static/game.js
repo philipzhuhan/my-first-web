@@ -661,10 +661,60 @@ function animate() {
             player.move();
             battleMob.move();
         }
+        displayNotifications();
         drawSaveIcon();
         drawCharInfo();
         drawHelp();
     }
+}
+
+function displayNotifications() {
+    manageNotificationScroll();
+    var notificationTxtSize = canvas.height / 8 / 3;
+    var notificationTxtStyle = notificationTxtSize + "px Arial";
+    for (i = 0; i < notifications.length; i++) {
+        ctx.fillStyle = "white";
+        ctx.globalAlpha = 0.4;
+        ctx.fillRect(notifications[i].x, notifications[i].y, notifications[i].width, notifications[i].height);
+        ctx.globalAlpha = 1.0;
+        ctx.fillStyle = "black";
+        ctx.font = notificationTxtStyle;
+        ctx.fillText(notifications[i].txt, notifications[i].x + notificationTxtSize, notifications[i].y + notificationTxtSize * 2, notifications[i].width);
+    }
+}
+
+function manageNotificationScroll() {
+    if (notifications.length > 0) {
+        for (i = 0; i < notifications.length; i++) {
+            if (i == 0) {
+                notifications[i].x = canvas.width / 4;
+                notifications[i].y -= canvas.height / 50;
+                notifications[i].width = canvas.width / 5 * 3;
+                notifications[i].height = canvas.height / 8;
+            } else {
+                if (notifications[i].y >= notifications[i - 1].y + notifications[i - 1].height) {
+                    notifications[i].x = canvas.width / 4;
+                    notifications[i].y -= canvas.height / 50;
+                    notifications[i].width = canvas.width / 5 * 3;
+                    notifications[i].height = canvas.height / 8;
+                }
+            }
+            if (notifications[i].y <= canvas.height / 10) {
+                notifications.shift();
+            }
+        }
+    }
+}
+
+function newNotification(txt) {
+    var notification = {
+        txt: txt,
+        x: canvas.width / 4,
+        y: canvas.height / 2,
+        width: canvas.width / 5 * 3,
+        height: canvas.height / 8,
+    };
+    notifications.push(notification);
 }
 
 function drawHelp() {
@@ -1072,15 +1122,20 @@ function attackMob(mob, isCritical) {
     var dmg = player.atk - mob.def;
     if (isCritical) {
         dmg *= 1.5;
+        newNotification('critical attack');
     }
     if (dmg < 0) {
         dmg = 0;
+        newNotification('dmg is too low');
         console.log('dmg is too low');
     }
     mob.curHp -= dmg;
+
+    newNotification('player dealt ' + dmg + 'dmg to the mob');
     if (mob.curHp <= 0) {
         // battleMob is killed
         var exp = 10; //// temperary set to 10 for now, need to implement variable based on level difference.
+        newNotification('battlemob is dead');
         console.log('battlemob is dead');
         if (mobs.length == 0) {
             initMobs();
