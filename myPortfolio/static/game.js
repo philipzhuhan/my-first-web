@@ -97,16 +97,7 @@ class Player {
         this.isAlive = true;
         this.isAttacking = false;
 
-        this.hpBarX = this.x;
-        this.hpBarY = this.y + this.height;
-        this.hpBarW = this.width;
-        this.hpBarH = this.height * 0.1;
-        this.curHpBarW = this.curHp / this.maxHp * this.hpBarW;
-        this.mpBarX = this.x;
-        this.mpBarY = this.hpBarY + this.hpBarH;
-        this.mpBarW = this.width;
-        this.mpBarH = this.height * 0.1;
-        this.curMpBarW = this.curMp / this.maxMp * this.mpBarW;
+        this.setHpMpBars();
     }
 
     review(x, y, width) {
@@ -117,7 +108,10 @@ class Player {
         if (curGameState == gameStates[0]) {
             this.speed = this.width / 3;
         }
+        this.setHpMpBars();
+    }
 
+    setHpMpBars() {
         this.hpBarX = this.x;
         this.hpBarY = this.y + this.height;
         this.hpBarW = this.width;
@@ -180,16 +174,16 @@ class Player {
         if (this.frameX < 3 && this.moving) this.frameX++
             else this.frameX = 0;
 
-        this.hpBarX = this.x;
-        this.hpBarY = this.y + this.height;
-        this.hpBarW = this.width;
-        this.hpBarH = this.height * 0.1;
-        this.curHpBarW = this.curHp / this.maxHp * this.hpBarW;
-        this.mpBarX = this.x;
-        this.mpBarY = this.hpBarY + this.hpBarH;
-        this.mpBarW = this.width;
-        this.mpBarH = this.height * 0.1;
-        this.curMpBarW = this.curMp / this.maxMp * this.mpBarW;
+        // this.hpBarX = this.x;
+        // this.hpBarY = this.y + this.height;
+        // this.hpBarW = this.width;
+        // this.hpBarH = this.height * 0.1;
+        // this.curHpBarW = this.curHp / this.maxHp * this.hpBarW;
+        // this.mpBarX = this.x;
+        // this.mpBarY = this.hpBarY + this.hpBarH;
+        // this.mpBarW = this.width;
+        // this.mpBarH = this.height * 0.1;
+        // this.curMpBarW = this.curMp / this.maxMp * this.mpBarW;
     }
 
     engageBattle(x, y, width) {
@@ -204,16 +198,7 @@ class Player {
         this.moving = true;
         this.speed = 0;
 
-        this.hpBarX = this.x;
-        this.hpBarY = this.y + this.height;
-        this.hpBarW = this.width;
-        this.hpBarH = this.height * 0.1;
-        this.curHpBarW = this.curHp / this.maxHp * this.hpBarW;
-        this.mpBarX = this.x;
-        this.mpBarY = this.hpBarY + this.hpBarH;
-        this.mpBarW = this.width;
-        this.mpBarH = this.height * 0.1;
-        this.curMpBarW = this.curMp / this.maxMp * this.mpBarW;
+        this.setHpMpBars();
     }
 
     disEngageBattle(width) {
@@ -224,16 +209,7 @@ class Player {
         this.moving = false;
         this.speed = this.width / 3;
 
-        this.hpBarX = this.x;
-        this.hpBarY = this.y + this.height;
-        this.hpBarW = this.width;
-        this.hpBarH = this.height * 0.1;
-        this.curHpBarW = this.curHp / this.maxHp * this.hpBarW;
-        this.mpBarX = this.x;
-        this.mpBarY = this.hpBarY + this.hpBarH;
-        this.mpBarW = this.width;
-        this.mpBarH = this.height * 0.1;
-        this.curMpBarW = this.curMp / this.maxMp * this.mpBarW;
+        this.setHpMpBars();
     }
 
     levelUp() {
@@ -308,16 +284,7 @@ class Mob {
         this.lvlFontSize = this.lvlH * 0.8;
         this.fontStyle = this.lvlFontSize + "px Arial";
         // display hp / mp
-        this.hpBarX = this.x;
-        this.hpBarY = this.y + this.height;
-        this.hpBarW = this.width;
-        this.hpBarH = this.height * 0.1;
-        this.curHpBarW = this.curHp / this.maxHp * this.hpBarW;
-        this.mpBarX = this.x;
-        this.mpBarY = this.hpBarY + this.hpBarH;
-        this.mpBarW = this.width;
-        this.mpBarH = this.height * 0.1;
-        this.curMpBarW = this.curMp / this.maxMp * this.mpBarW;
+        this.setHpMpBars();
     }
 
     review(mobInitX, mobInitY, mobX, mobY, mobW) {
@@ -341,6 +308,11 @@ class Mob {
         this.lvlFontSize = this.lvlH * 0.8;
         this.fontStyle = this.lvlFontSize + "px Arial";
         // display hp / mp
+        this.setHpMpBars();
+
+    }
+
+    setHpMpBars() {
         this.hpBarX = this.x;
         this.hpBarY = this.y + this.height;
         this.hpBarW = this.width;
@@ -420,16 +392,16 @@ class Mob {
         if (this.frameX < 7 && this.moving) this.frameX++
             else this.frameX = 0;
 
-        this.hpBarX = this.x;
-        this.hpBarY = this.y + this.height;
-        this.hpBarW = this.width;
-        this.hpBarH = this.height * 0.1;
-        this.curHpBarW = this.curHp / this.maxHp * this.hpBarW;
-        this.mpBarX = this.x;
-        this.mpBarY = this.hpBarY + this.hpBarH;
-        this.mpBarW = this.width;
-        this.mpBarH = this.height * 0.1;
-        this.curMpBarW = this.curMp / this.maxMp * this.mpBarW;
+        // this.hpBarX = this.x;
+        // this.hpBarY = this.y + this.height;
+        // this.hpBarW = this.width;
+        // this.hpBarH = this.height * 0.1;
+        // this.curHpBarW = this.curHp / this.maxHp * this.hpBarW;
+        // this.mpBarX = this.x;
+        // this.mpBarY = this.hpBarY + this.hpBarH;
+        // this.mpBarW = this.width;
+        // this.mpBarH = this.height * 0.1;
+        // this.curMpBarW = this.curMp / this.maxMp * this.mpBarW;
 
     }
 
@@ -689,13 +661,13 @@ function manageNotificationScroll() {
             if (i == 0) {
                 notifications[i].x = canvas.width / 4;
                 notifications[i].y -= canvas.height / 50;
-                notifications[i].width = canvas.width / 5 * 3;
+                notifications[i].width = canvas.width / 2;
                 notifications[i].height = canvas.height / 8;
             } else {
                 if (notifications[i].y >= notifications[i - 1].y + notifications[i - 1].height) {
                     notifications[i].x = canvas.width / 4;
                     notifications[i].y -= canvas.height / 50;
-                    notifications[i].width = canvas.width / 5 * 3;
+                    notifications[i].width = canvas.width / 2;
                     notifications[i].height = canvas.height / 8;
                 }
             }
@@ -711,7 +683,7 @@ function newNotification(txt) {
         txt: txt,
         x: canvas.width / 4,
         y: canvas.height / 2,
-        width: canvas.width / 5 * 3,
+        width: canvas.width / 2,
         height: canvas.height / 8,
     };
     notifications.push(notification);
@@ -1035,18 +1007,33 @@ function adjustView() {
         }
     }
     if (curGameState == gameStates[1]) {
-        playerW = vpWidth / 4;
-        playerX = vpWidth / 4 - playerW / 2;
-        playerY = vpHeight / 3 - playerW / player.srcFrameW * player.srcFrameH / 2;
+        if (vpWidth > vpHeight) {
+            playerH = vpHeight / 4;
+            playerW = playerH / player.srcFrameH * player.srcFrameW;
+            playerX = vpWidth / 4 - playerW / 2;
+            playerY = vpHeight / 3 - playerH / 2;
+        } else {
+            playerW = vpWidth / 4;
+            playerH = playerW / player.srcFrameW * player.srcFrameH;
+            playerX = vpWidth / 4 - playerW / 2;
+            playerY = vpHeight / 3 - playerW / player.srcFrameW * player.srcFrameH / 2;
+        }
         player.review(playerX, playerY, playerW)
-            // review battle mob
+
+        // review battle mob
         mobInitXPerc = battleMob.initX / originW;
         mobInitYPerc = battleMob.initY / originH;
         mobInitX = vpWidth * mobInitXPerc;
         mobInitY = vpHeight * mobInitYPerc;
-        mobW = vpWidth / 4;
-        mobX = vpWidth / 4 * 3 - mobW / 2;
-        mobY = vpHeight / 3 - mobW / battleMob.srcFrameW * battleMob.srcFrameH / 2;
+        if (vpWidth > vpHeight) {
+            mobW = vpHeight / 4 / battleMob.srcFrameH * battleMob.srcFrameW;
+            mobX = vpWidth / 4 * 3 - mobW / 2;
+            mobY = vpHeight / 3 - mobW / battleMob.srcFrameW * battleMob.srcFrameH / 2;
+        } else {
+            mobW = vpWidth / 4;
+            mobX = vpWidth / 4 * 3 - mobW / 2;
+            mobY = vpHeight / 3 - mobW / battleMob.srcFrameW * battleMob.srcFrameH / 2;
+        }
         battleMob.review(mobInitX, mobInitY, mobX, mobY, mobW);
 
         // review action box below
@@ -1057,21 +1044,40 @@ function adjustView() {
 
     canvas.width = vpWidth;
     canvas.height = vpHeight;
-    // resize save icon
-    saveX = canvas.width * 0.85;
-    saveY = canvas.height * 0.05;
-    saveW = canvas.width * 0.03;
-    saveH = canvas.height * 0.03;
-    // resize char info icon
-    charInfoX = canvas.width * 0.9;
-    charInfoY = canvas.height * 0.05;
-    charInfoW = canvas.width * 0.03;
-    charInfoH = canvas.height * 0.03;
-    // resize question mark
-    helpX = canvas.width * 0.95;
-    helpY = canvas.height * 0.05;
-    helpW = canvas.width * 0.03;
-    helpH = canvas.height * 0.03;
+    if (vpWidth > vpHeight) {
+        // resize question mark
+        helpW = canvas.width * 0.03;
+        helpH = helpW / helpImg.width * helpImg.height;
+        helpX = canvas.width - helpW;
+        helpY = canvas.height * 0.05;
+        // resize char info icon
+        charInfoW = canvas.width * 0.03;
+        charInfoH = charInfoW / charIconImg.width * charIconImg.height;
+        charInfoX = helpX - charInfoW;
+        charInfoY = canvas.height * 0.05;
+        // resize save icon
+        saveW = canvas.width * 0.03;
+        saveH = saveW / saveIconImg.width * saveIconImg.height;
+        saveX = charInfoX - saveW;
+        saveY = canvas.height * 0.05;
+    } else {
+        // resize question mark
+        helpH = canvas.height * 0.03;
+        helpW = helpH / helpImg.height * helpImg.width;
+        helpX = canvas.width - helpW;
+        helpY = 0;
+        // resize char info icon
+        charInfoH = canvas.height * 0.03;
+        charInfoW = charInfoH / charIconImg.height * charIconImg.width;
+        charInfoX = canvas.width - charInfoW;
+        charInfoY = helpY + helpH;
+        // resize save icon
+        saveH = canvas.height * 0.03;
+        saveW = saveH / saveIconImg.height * saveIconImg.width;
+        saveX = canvas.width - saveW;
+        saveY = charInfoY + charInfoH;
+    }
+
 }
 
 function drawBackground() {
@@ -1339,17 +1345,21 @@ function selectOption(e) {
         answerCorrect = ansOptIndex == indexOfAns;
         if (curAction == actions[0]) {
             if (answerCorrect) {
-                console.log('critical');
+                newNotification('Correct! Critical!');
                 attackMob(battleMob, true);
             } else {
+                newNotification('Wrong');
+                newNotification('The answer is: ' + ans);
                 attackMob(battleMob, false);
             }
         }
         if (curAction == actions[1]) {
             if (answerCorrect) {
-                console.log('critical');
+                newNotification('Correct! Critical!');
                 magicMob(player, battleMob, true);
             } else {
+                newNotification('Wrong');
+                newNotification('The answer is: ' + ans);
                 magicMob(player, battleMob, false);
             }
         }
