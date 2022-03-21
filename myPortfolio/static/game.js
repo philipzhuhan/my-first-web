@@ -173,43 +173,22 @@ class Player {
 
         if (this.frameX < 3 && this.moving) this.frameX++
             else this.frameX = 0;
-
-        // this.hpBarX = this.x;
-        // this.hpBarY = this.y + this.height;
-        // this.hpBarW = this.width;
-        // this.hpBarH = this.height * 0.1;
-        // this.curHpBarW = this.curHp / this.maxHp * this.hpBarW;
-        // this.mpBarX = this.x;
-        // this.mpBarY = this.hpBarY + this.hpBarH;
-        // this.mpBarW = this.width;
-        // this.mpBarH = this.height * 0.1;
-        // this.curMpBarW = this.curMp / this.maxMp * this.mpBarW;
     }
 
-    engageBattle(x, y, width) {
+    engageBattle() {
         this.originX = this.x;
         this.originY = this.y;
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = this.width / this.srcFrameW * this.srcFrameH;
         this.frameX = 0;
         this.frameY = 1;
         this.moving = true;
         this.speed = 0;
-
-        this.setHpMpBars();
     }
 
     disEngageBattle(width) {
         this.x = this.originX;
         this.y = this.originY;
-        this.width = width;
-        this.height = this.width / this.srcFrameW * this.srcFrameH;
         this.moving = false;
         this.speed = this.width / 3;
-
-        this.setHpMpBars();
     }
 
     levelUp() {
@@ -229,6 +208,10 @@ class Player {
         while (this.curExp >= this.maxExp) {
             this.curExp -= this.maxExp;
             this.levelUp();
+        }
+        if (this.curExp <= 0) {
+            // if exp is < 0, player reduces cur exp until 0
+            this.curExp = 0;
         }
     }
 
@@ -391,25 +374,13 @@ class Mob {
         }
         if (this.frameX < 7 && this.moving) this.frameX++
             else this.frameX = 0;
-
-        // this.hpBarX = this.x;
-        // this.hpBarY = this.y + this.height;
-        // this.hpBarW = this.width;
-        // this.hpBarH = this.height * 0.1;
-        // this.curHpBarW = this.curHp / this.maxHp * this.hpBarW;
-        // this.mpBarX = this.x;
-        // this.mpBarY = this.hpBarY + this.hpBarH;
-        // this.mpBarW = this.width;
-        // this.mpBarH = this.height * 0.1;
-        // this.curMpBarW = this.curMp / this.maxMp * this.mpBarW;
-
     }
 
-    engageBattle(x, y, width) {
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = this.width / this.srcFrameW * this.srcFrameH;
+    engageBattle() {
+        // this.x = x;
+        // this.y = y;
+        // this.width = width;
+        // this.height = this.width / this.srcFrameW * this.srcFrameH;
         this.frameX = 0;
         this.frameY = 0;
         this.moving = true;
@@ -424,16 +395,16 @@ class Mob {
         this.lvlFontSize = this.lvlH * 0.8;
         this.fontStyle = this.lvlFontSize + "px Arial";
         // display hp / mp
-        this.hpBarX = this.x;
-        this.hpBarY = this.y + this.height;
-        this.hpBarW = this.width;
-        this.hpBarH = this.height * 0.1;
-        this.curHpBarW = this.curHp / this.maxHp * this.hpBarW;
-        this.mpBarX = this.x;
-        this.mpBarY = this.hpBarY + this.hpBarH;
-        this.mpBarW = this.width;
-        this.mpBarH = this.height * 0.1;
-        this.curMpBarW = this.curMp / this.maxMp * this.mpBarW;
+        // this.hpBarX = this.x;
+        // this.hpBarY = this.y + this.height;
+        // this.hpBarW = this.width;
+        // this.hpBarH = this.height * 0.1;
+        // this.curHpBarW = this.curHp / this.maxHp * this.hpBarW;
+        // this.mpBarX = this.x;
+        // this.mpBarY = this.hpBarY + this.hpBarH;
+        // this.mpBarW = this.width;
+        // this.mpBarH = this.height * 0.1;
+        // this.curMpBarW = this.curMp / this.maxMp * this.mpBarW;
     }
 
     disEngageBattle(width) {
@@ -457,16 +428,16 @@ class Mob {
         this.lvlFontSize = this.lvlH * 0.8;
         this.fontStyle = this.lvlFontSize + "px Arial";
         // display hp / mp
-        this.hpBarX = this.x;
-        this.hpBarY = this.y + this.height;
-        this.hpBarW = this.width;
-        this.hpBarH = this.height * 0.1;
-        this.curHpBarW = this.curHp / this.maxHp * this.hpBarW;
-        this.mpBarX = this.x;
-        this.mpBarY = this.hpBarY + this.hpBarH;
-        this.mpBarW = this.width;
-        this.mpBarH = this.height * 0.1;
-        this.curMpBarW = this.curMp / this.maxMp * this.mpBarW;
+        // this.hpBarX = this.x;
+        // this.hpBarY = this.y + this.height;
+        // this.hpBarW = this.width;
+        // this.hpBarH = this.height * 0.1;
+        // this.curHpBarW = this.curHp / this.maxHp * this.hpBarW;
+        // this.mpBarX = this.x;
+        // this.mpBarY = this.hpBarY + this.hpBarH;
+        // this.mpBarW = this.width;
+        // this.mpBarH = this.height * 0.1;
+        // this.curMpBarW = this.curMp / this.maxMp * this.mpBarW;
     }
 }
 
@@ -485,6 +456,8 @@ let mapLvl = 1;
 const mobDirs = ["up", "right", "down", "left"];
 var savedCharacters = [];
 var battleMob;
+var mobLastAtkTime;
+const mobAtkInterval = 5000; // battle mob attack interval is 5 second
 const actions = ["Attack", "Magic", "Escape"];
 let curActionIndex = 0;
 let curAction = actions[curActionIndex];
@@ -608,15 +581,9 @@ function animate() {
                     curActionIndex = 0;
                     curAction = actions[curActionIndex];
                     initiate_action_box();
-                    var playerX, playerY, playerW, mobX, mobY, mobW;
-                    playerW = canvas.width / 4;
-                    playerX = canvas.width / 4 - playerW / 2; // player x pos is at 1/4 of the screen width
-                    playerY = canvas.height / 3 - playerW / player.srcFrameW * player.srcFrameH / 2; // player y pos is at 1/3 of the screen height
-                    player.engageBattle(playerX, playerY, playerW);
-                    mobW = canvas.height / 4;
-                    mobX = canvas.width / 4 * 3 - mobW / 2;
-                    mobY = canvas.height / 3 - mobW / battleMob.srcFrameW * battleMob.srcFrameH / 2;
-                    battleMob.engageBattle(mobX, mobY, mobW);
+                    player.engageBattle();
+                    battleMob.engageBattle();
+                    mobLastAtkTime = Date.now();
                     console.log("engaging battle");
                 }
             }
@@ -632,6 +599,7 @@ function animate() {
             battleMob.draw(ctx);
             player.move();
             battleMob.move();
+            manageMobAtk();
         }
         displayNotifications();
         drawSaveIcon();
@@ -1296,6 +1264,40 @@ window.addEventListener("keyup", function(e) {
 
 var touch, firstTouchX, firstTouchY, touchEndX, touchEndY;
 var trackMove = false;
+
+function manageMobAtk() {
+    var curTime = Date.now();
+    if (curGameState == gameStates[1]) {
+        // in battle state
+        if (curTime >= mobLastAtkTime + mobAtkInterval) {
+            mobAtkPlayer();
+            mobLastAtkTime = curTime;
+        }
+    }
+}
+
+function mobAtkPlayer() {
+    var dmg = battleMob.atk - player.def;
+    if (dmg < 0) {
+        dmg = 0;
+        newNotification('dmg is too low');
+        console.log('dmg is too low');
+    }
+    player.curHp -= dmg;
+
+    newNotification('player received ' + dmg + 'dmg from the mob');
+    if (player.curHp <= 0) {
+        // player is killed
+        var exp = -10; //// temperary set to 10 for now, need to implement variable based on level difference.
+        newNotification('player is dead');
+        console.log('player is dead');
+        player.addExp(exp);
+        player.disEngageBattle(canvas.width * 0.05);
+        displayQn = false;
+        resetKeys();
+        curGameState = gameStates[0];
+    }
+}
 
 function chooseAnsOption(e) {
     touchEndX = e.touches[0].clientX;

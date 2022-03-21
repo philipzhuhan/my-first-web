@@ -5,7 +5,7 @@ from datetime import date, datetime, timedelta
 from flask import render_template, url_for, flash, redirect, request, jsonify
 from myPortfolio import app, db, bcrypt, admin
 from myPortfolio.forms import RegistrationForm, LoginForm, RegisterChildForm, UpdateParentAccountForm, AddQuestionForm
-from myPortfolio.models import User, Parent, Child, Game_Character_Save, Question, Progress
+from myPortfolio.models import User, Parent, Child, Game_Character_Save, Question, Progress, DailyProgress, MonthlyProgress
 from flask_login import login_user, logout_user, current_user, login_required
 from flask_admin.contrib.sqla.view import ModelView
 
@@ -23,6 +23,8 @@ admin.add_view(MyModelView(Parent, db.session))
 admin.add_view(MyModelView(Child, db.session))
 admin.add_view(MyModelView(Game_Character_Save, db.session))
 admin.add_view(MyModelView(Progress, db.session))
+admin.add_view(MyModelView(DailyProgress, db.session))
+admin.add_view(MyModelView(MonthlyProgress, db.session))
 
 @app.route("/")
 @app.route("/home")
@@ -192,7 +194,9 @@ def view(id):
                 child = Child.query.filter_by(id=user.id).first()
                 if current_user.id == child.parent_id:
                     progressRecord = []
+                    dailyProgressRecord = []
                     progressList = Progress.query.filter_by(child_id=child.id).all()
+                    dailyProgressList = DailyProgress.query.filter_by(child_id=child.id).all()
                     childObj = {
                         'id': user.id,
                         'parent_id': current_user.id,
@@ -213,7 +217,18 @@ def view(id):
                             'duration': progress.duration,
                         }
                         progressRecord.append(progressObj)
-                    return render_template('view-child.html', title='Child Detail', child=childObj, progress=progressRecord)
+                    for progress in dailyProgressList:
+                        progressObj = {
+                            'date': progress.date,
+                            'subject': progress.subject,
+                            'operation': progress.operation,
+                            'question': progress.question,
+                            'total_attempted': progress.total_attempted,
+                            'ans_correct': progress.ans_correct,
+                            'avg_duration': progress.avg_duration,
+                        }
+                        dailyProgressRecord.append(progressObj)
+                    return render_template('view-child.html', title='Child Detail', child=childObj, progress=progressRecord, dailyProgress = dailyProgressRecord)
     else:
         return redirect(url_for('home'))
 
@@ -237,7 +252,6 @@ def save_progress():
     ansChosen = req["ansChosen"]
     duration = req["duration"]
     progress = Progress(child_id=current_user.id, subject=subject, result=result, operation=operation, question=question, correct_ans=correctAnswer, ans_chosen=ansChosen, duration=duration)
-    print(progress)
     db.session.add(progress)
     db.session.commit()
     return "OK"
@@ -252,9 +266,6 @@ def load_characters():
                 'id': saved_character.id,
                 'character': saved_character.game_character,
             }
-            print('char loaded: ')
-            print(char_object['id'])
-            print(char_object['character'])
             return jsonify(char_object)
         else:
             char_object = {
@@ -276,7 +287,6 @@ def save_character():
             db.session.add(char)
         else:
             char = Game_Character_Save.query.filter_by(id=id).first()
-            # print(char)
             char.game_character = character
             char.save_date = today
         db.session.commit()
@@ -299,3 +309,38 @@ def add_question():
             return redirect(url_for(add_question))
         return render_template('add-question.html', title='Add Question', form=form)
     return redirect(url_for('dashboard'))
+
+@app.route("/admin/clean-progress", methods=['GET', 'POST'])
+@login_required
+def clean_progress():
+    if current_user.role == 'admin':
+        progressRecords = Progress.query.all();
+        for record in progressRecords:
+            dateOfRecord = record.date.date()
+            if dateOfRecord < datetime.today().date():
+                dailyRecord = DailyProgress.query.filter_by(child_id=record.child_id, date=dateOfRecord, subject=record.subject, operation = record.operation).first()
+                if dailyRecord:
+                    dailyRecord.total_attempted += 1
+                    dailyRecord.avg_duration = (dailyRecord.avg_duration * dailyRecord.total_attempted + record.duration) / dailyRecord.total_attempted
+                    if record.result == True:
+                        dailyRecord.ans_correct += 1
+                else:
+                    if record.result:
+                        ans_correct = 1
+                    else:
+                        ans_correct = 0
+                    dailyRecord = DailyProgress(child_id=record.child_id, date=dateOfRecord, subject=record.subject, operation=record.operation, total_attempted=1, ans_correct=ans_correct, avg_duration=record.duration)
+                    db.session.add(dailyRecord)
+                db.session.delete(record)
+                db.session.commit()
+        dailyRecords = DailyProgress.query.all();
+        print(datetime.today().year)
+        for record in dailyRecords:
+            yearOfRecord = record.date.year;
+            monthOfRecord = record.date.month;
+            print(type(monthOfRecord))
+            print(yearOfRecord)
+            print(monthOfRecord)
+        return redirect(url_for('dashboard'))
+    else:
+        return redirect(url_for('dashboard'))

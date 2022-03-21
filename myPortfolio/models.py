@@ -30,7 +30,8 @@ class Parent(db.Model):
     children = db.relationship('Child', backref='parent', lazy=True)
     
     def __repr__(self):
-        return f"Parent('{self.id}')"
+        user = User.query.filter_by(id=self.id).first()
+        return f"Parent('{self.id}', '{user.first_name}')"
 
 class Child(db.Model):
     id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
@@ -39,7 +40,8 @@ class Child(db.Model):
     game_characters = db.relationship('Game_Character_Save', backref='child', lazy=True)
     
     def __repr__(self):
-        return f"Child('{self.id}')"
+        user = User.query.filter_by(id=self.id).first()
+        return f"Child('{self.id}', '{user.first_name}')"
 
 class Game_Character_Save(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -57,6 +59,14 @@ class Question(db.Model):
     ans = db.Column(db.String(), nullable=False)
     ans_pic = db.Column(db.String(20), nullable=True)
 
+class PlayTime(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    child_id = db.Column(db.Integer, db.ForeignKey('child.id'), nullable=False)
+    date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    start = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    duration = db.Column(db.Integer, nullable=False, default=0)
+    end = db.Column(db.DateTime, nullable=True)
+
 class Progress(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     child_id = db.Column(db.Integer, db.ForeignKey('child.id'), nullable=False)
@@ -68,3 +78,24 @@ class Progress(db.Model):
     correct_ans = db.Column(db.String(), nullable=False)
     ans_chosen = db.Column(db.String(), nullable=False)
     duration = db.Column(db.Integer, nullable=False)
+
+class DailyProgress(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    child_id = db.Column(db.Integer, db.ForeignKey('child.id'), nullable=False)
+    date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
+    subject = db.Column(db.String(3), nullable=False)
+    operation = db.Column(db.String(), nullable=False)
+    total_attempted = db.Column(db.Integer, nullable=False)
+    ans_correct = db.Column(db.Integer, nullable=False)
+    avg_duration = db.Column(db.Integer, nullable=False)
+
+class MonthlyProgress(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    child_id = db.Column(db.Integer, db.ForeignKey('child.id'), nullable=False)
+    month = db.Column(db.Integer, nullable=False)
+    year = db.Column(db.Integer, nullable=False)
+    subject = db.Column(db.String(3), nullable=False)
+    operation = db.Column(db.String(), nullable=False)
+    total_attempted = db.Column(db.Integer, nullable=False)
+    ans_correct = db.Column(db.Integer, nullable=False)
+    avg_duration = db.Column(db.Integer, nullable=False)
