@@ -4,8 +4,8 @@ from PIL import Image
 from datetime import date, datetime, timedelta
 from flask import render_template, url_for, flash, redirect, request, jsonify
 from myPortfolio import app, db, bcrypt, admin
-from myPortfolio.forms import RegistrationForm, LoginForm, RegisterChildForm, UpdateParentAccountForm, AddQuestionForm
-from myPortfolio.models import User, Parent, Child, Game_Character_Save, Question, Progress, DailyProgress, MonthlyProgress
+from myPortfolio.forms import RegistrationForm, LoginForm, RegisterChildForm, UpdateParentAccountForm, AddQuestionForm, EnrollForm
+from myPortfolio.models import User, Parent, Child, Game_Character_Save, Question, Progress, DailyProgress, MonthlyProgress, Enroll, Subject, Pricing
 from flask_login import login_user, logout_user, current_user, login_required
 from flask_admin.contrib.sqla.view import ModelView
 
@@ -25,6 +25,9 @@ admin.add_view(MyModelView(Game_Character_Save, db.session))
 admin.add_view(MyModelView(Progress, db.session))
 admin.add_view(MyModelView(DailyProgress, db.session))
 admin.add_view(MyModelView(MonthlyProgress, db.session))
+admin.add_view(MyModelView(Subject, db.session))
+admin.add_view(MyModelView(Pricing, db.session))
+admin.add_view(MyModelView(Enroll, db.session))
 
 @app.route("/")
 @app.route("/home")
@@ -73,6 +76,8 @@ def logout():
 @app.route("/dashboard")
 @login_required
 def dashboard():
+    if current_user.role == 'admin':
+        return render_template('admin-dashboard.html')
     if current_user.role == 'parent':
         parent = Parent.query.filter_by(id=current_user.id).first()
         parentDetail = {
@@ -193,10 +198,14 @@ def view(id):
             if user.role == 'child':
                 child = Child.query.filter_by(id=user.id).first()
                 if current_user.id == child.parent_id:
+                    ops = []
                     progressRecord = []
                     dailyProgressRecord = []
+                    monthlyProgressRecord = []
+                    enrolled = []
                     progressList = Progress.query.filter_by(child_id=child.id).all()
                     dailyProgressList = DailyProgress.query.filter_by(child_id=child.id).all()
+                    monthlyProgressList = MonthlyProgress.query.filter_by(child_id=child.id).all()
                     childObj = {
                         'id': user.id,
                         'parent_id': current_user.id,
@@ -216,21 +225,79 @@ def view(id):
                             'result': progress.result,
                             'duration': progress.duration,
                         }
+                        if [progress.subject, progress.operation] not in ops:
+                            ops.append([progress.subject, progress.operation])
                         progressRecord.append(progressObj)
                     for progress in dailyProgressList:
                         progressObj = {
                             'date': progress.date,
                             'subject': progress.subject,
                             'operation': progress.operation,
-                            'question': progress.question,
                             'total_attempted': progress.total_attempted,
                             'ans_correct': progress.ans_correct,
                             'avg_duration': progress.avg_duration,
                         }
+                        if [progress.subject, progress.operation] not in ops:
+                            ops.append([progress.subject, progress.operation])
                         dailyProgressRecord.append(progressObj)
-                    return render_template('view-child.html', title='Child Detail', child=childObj, progress=progressRecord, dailyProgress = dailyProgressRecord)
+                    for progress in monthlyProgressList:
+                        progressObj = {
+                            'date': progress.date,
+                            'subject': progress.subject,
+                            'operation': progress.operation,
+                            'total_attempted': progress.total_attempted,
+                            'ans_correct': progress.ans_correct,
+                            'avg_duration': progress.avg_duration,
+                        }
+                        if [progress.subject, progress.operation] not in ops:
+                            ops.append([progress.subject, progress.operation])
+                        monthlyProgressRecord.append(progressObj)
+                    enrollment = Enroll.query.filter_by(child_id=child.id).all()
+                    for enroll in enrollment:
+                        enrollObj = {
+                            'child_id': enroll.child_id,
+                            'subject': enroll.subject,
+                            'validity': enroll.validity,
+                        };
+                        enrolled.append(enrollObj)
+                    return render_template('view-child.html', title='Child Detail', child=childObj, progress=progressRecord, dailyProgress = dailyProgressRecord, monthlyProgress = monthlyProgressRecord, ops=ops, enrolled=enrolled)
     else:
         return redirect(url_for('home'))
+
+@app.route("/enroll/<child_id>", methods=['GET', 'POST'])
+@login_required
+def enroll(child_id):
+    child = Child.query.filter_by(id=child_id).first()
+    user = User.query.filter_by(id=child_id).first()
+    childObj = {
+        'first_name': user.first_name,
+        'image_file': url_for('static', filename='img/profile_pics/' + user.image_file),
+        'grade': child.grade,
+        'date_joined': user.date_joined,
+    }
+    subjectList = []
+    priceList = []
+    enrollmentList = []
+    if current_user.role == 'parent' and current_user.id == child.parent_id:
+        form = EnrollForm()
+        subjects = Subject.query.all()
+        for subject in subjects:
+            sub = {
+                'subject': subject.name,
+                'short-form': subject.short_form,
+            };
+            subjectList.append(sub)
+        form.subject.choices=subjectList
+        prices = Pricing.query.all()
+        for price in prices:
+            priceObj = {
+                'duration': price.duration,
+                'price': price.price,
+            };
+            priceList.append(priceObj)
+        form.priceOptions.choices=priceList
+        enrollments = Enroll.query.all()   
+    return render_template("enroll.html", child=childObj, subjectList=subjectList, form=form, priceList = priceList, enrollmentList=enrollmentList)
 
 @app.route("/game")
 @login_required
@@ -304,7 +371,7 @@ def add_question():
                 ans_pic = save_profile_picture(form.ans_pic.data)
             qn = Question(subject=form.subject.data, grade=form.grade.data, qn_txt=form.qn_txt.data, qn_pic=qn_pic, qn_pic_repeatable=form.qn_pic_repeatable.data, ans=form.ans.data, ans_pic=ans_pic)
             db.session.add(qn)
-            db.session.commit();
+            db.session.commit()
             flash("new question added: " + qn.subject + " / " + qn.grade)
             return redirect(url_for(add_question))
         return render_template('add-question.html', title='Add Question', form=form)
@@ -314,7 +381,7 @@ def add_question():
 @login_required
 def clean_progress():
     if current_user.role == 'admin':
-        progressRecords = Progress.query.all();
+        progressRecords = Progress.query.all()
         for record in progressRecords:
             dateOfRecord = record.date.date()
             if dateOfRecord < datetime.today().date():
@@ -333,14 +400,26 @@ def clean_progress():
                     db.session.add(dailyRecord)
                 db.session.delete(record)
                 db.session.commit()
-        dailyRecords = DailyProgress.query.all();
-        print(datetime.today().year)
+        dailyRecords = DailyProgress.query.all()
+        thisYear = datetime.today().year
+        thisMonth = datetime.today().month
+        print(thisYear)
         for record in dailyRecords:
-            yearOfRecord = record.date.year;
-            monthOfRecord = record.date.month;
-            print(type(monthOfRecord))
-            print(yearOfRecord)
-            print(monthOfRecord)
+            yearOfRecord = record.date.year
+            monthOfRecord = record.date.month
+            if not yearOfRecord == thisYear and monthOfRecord == thisMonth:
+                monthlyRecord = MonthlyProgress.query.filter_by(year=yearOfRecord, month=monthOfRecord, subject = record.subject, operation=record.operation).first()
+                if monthlyRecord:
+                    # record exist modify and add on top of the data
+                    newTotalAttempted = monthlyRecord.total_attempted + record.total_attempted
+                    monthlyRecord.avg_duration = (monthlyRecord.avg_duration * monthlyRecord.total_attempted + record.avg_duration * record.total_attempted) / newTotalAttempted
+                    monthlyRecord.total_attempted = newTotalAttempted
+                    monthlyRecord.ans_correct += record.ans_correct
+                else:
+                    # no existing record for the year/month/subject/operation combination, create new entry
+                    monthlyRecord = MonthlyProgress(child_id=record.child_id, year=yearOfRecord, month=monthOfRecord, subject=record.subject, operation=record.operation, total_attempted=record.total_attempted, ans_correct=record.ans_correct, avg_duration=record.avg_duration)
+                    db.session.add(monthlyRecord)
+                db.session.commit()
         return redirect(url_for('dashboard'))
     else:
         return redirect(url_for('dashboard'))

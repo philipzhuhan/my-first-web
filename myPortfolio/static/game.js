@@ -25,6 +25,11 @@ const saveIconImg = {
     width: 442,
     height: 442,
 };
+const invIconImg = {
+    src: "static/img/bag.png",
+    width: 16,
+    height: 16,
+};
 // const redCrossImg2 = {
 //     src: "static/img/Red-cross-mark-icon.png",
 //     width: 0,
@@ -92,6 +97,7 @@ class Player {
         this.def = this.lvl * 15 + 15;
         this.gold = 0;
         this.inv = [];
+        this.invSize = 16;
         // in battle
         this.inBattle = false;
         this.isAlive = true;
@@ -444,6 +450,8 @@ class Mob {
 let fps, fpsInterval, startTime, now, then, elapsed;
 let player;
 let playerX, playerY, playerW, playerH;
+let invX, invY, invW, invH;
+let invIconX, invIconY, invIconW, invIconH;
 let helpX, helpY, helpW, helpH;
 let charInfoX, charInfoY, charInfoW, charInfoH;
 let saveX, saveY, saveW, saveH;

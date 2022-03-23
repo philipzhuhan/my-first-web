@@ -68,6 +68,11 @@ class UpdateParentAccountForm(FlaskForm):
             if user:
                 raise ValidationError('That email is taken. Please choose a different one.')
 
+class EnrollForm(FlaskForm):
+    subject = SelectField('Subject', validators=[DataRequired()])
+    priceOptions = SelectField('Price Options')
+    submit = SubmitField('Update')
+
 class AddQuestionForm(FlaskForm):
     subjects = [('mat', 'Mathematics'), ('eng', 'English'), ('sci', 'Science')]
     grades = [('p1', 'Primary 1'), ('p2', 'Primary 2'), ('p3', 'Primary 3'), ('p4', 'Primary 4'), ('p5', 'Primary 5'), ('p6', 'Primary 6')]

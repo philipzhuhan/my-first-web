@@ -1,0 +1,62 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="content-section" id="display_children">
+    
+    <table class="table">
+        <thead class="thead_light">
+            <tr>
+                <th scope="col">Child</th>
+                <th scope="col">Name</th>
+                <th scope="col">Grade</th>
+                <th scope="col">Date Joined</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><img class="rounded-circle account-img" src="{{ child.image_file }}"></td>
+                <td><a href="{{ child.id }}">{{ child.first_name }}</a></td>
+                <td>{{ child.grade }}</td>
+                <td>{{ child.date_joined }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <form method="POST" action="" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+            <fieldset class="form-group">
+                <legend class="border-bottom mb-4">Enrollment</legend>
+                <div class="form-group">
+                    {{ form.subject.label(class="form-control-label") }}
+                    {% if form.subject.errors %}
+                        {{ form.subject(class="form-control form-control-lg is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.subject.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.subject(class="form-control form-control-lg") }}
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    {{ form.priceOptions.label(class="form-control-label") }}
+                    {% if form.priceOptions.errors %}
+                        {{ form.priceOptions(class="form-control form-control-lg is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.priceOptions.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.priceOptions(class="form-control form-control-lg") }}
+                    {% endif %}
+                </div>
+            </fieldset>
+            <div class="form-group">
+                {{ form.submit(class="btn btn-outline-info") }}
+            </div>
+        </form>
+    <!-- <a type="button" class="btn btn-outline-info" href="{{ url_for('add_child') }}">Update</a> -->
+</div>
+{% endblock content %}

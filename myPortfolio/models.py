@@ -43,6 +43,12 @@ class Child(db.Model):
         user = User.query.filter_by(id=self.id).first()
         return f"Child('{self.id}', '{user.first_name}')"
 
+class Enroll(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    child_id = db.Column(db.Integer, db.ForeignKey('child.id'), nullable=False)
+    subject = db.Column(db.String(3), nullable=False)
+    valid_until = db.Column(db.Date, nullable=False)
+
 class Game_Character_Save(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     child_id = db.Column(db.Integer, db.ForeignKey('child.id'), nullable=False)
@@ -92,10 +98,20 @@ class DailyProgress(db.Model):
 class MonthlyProgress(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     child_id = db.Column(db.Integer, db.ForeignKey('child.id'), nullable=False)
-    month = db.Column(db.Integer, nullable=False)
     year = db.Column(db.Integer, nullable=False)
+    month = db.Column(db.Integer, nullable=False)
     subject = db.Column(db.String(3), nullable=False)
     operation = db.Column(db.String(), nullable=False)
     total_attempted = db.Column(db.Integer, nullable=False)
     ans_correct = db.Column(db.Integer, nullable=False)
     avg_duration = db.Column(db.Integer, nullable=False)
+    
+class Subject(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False)
+    short_form = db.Column(db.String(3), nullable=False, unique=True)
+
+class Pricing(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    duration = db.Column(db.Integer, nullable=False)
+    price = db.Column(db.Integer, nullable=False)
