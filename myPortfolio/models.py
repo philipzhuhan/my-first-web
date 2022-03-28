@@ -19,18 +19,17 @@ class User(db.Model, UserMixin):
     date_joined = db.Column(db.Date, nullable=False, default=datetime.utcnow)
     image_file = db.Column(db.String(20), nullable=False, default='default.png')
     
-    def get_reset_token(self):
-        s = Serializer(app.config['SECRET_KEY'], 'reset password')
-        return s.dumps(self.id)
+    # def get_reset_token(self):
+    #     s = Serializer(app.config['SECRET_KEY'], 'reset password')
+    #     return s.dumps(self.id)
     
-    @staticmethod
-    def verify_reset_token(self, token, max_age=3600):
-        s = Serializer(app.config['SECRET_KEY'], 'reset password')
-        try:
-            user_id = s.loads(token, max_age=max_age)
-        except:
-            return None
-        return User.query.get(int(user_id))
+    # def verify_reset_token(self, token, max_age=3600):
+    #     s = Serializer(app.config['SECRET_KEY'], 'reset password')
+    #     try:
+    #         user_id = s.loads(token, max_age=max_age)
+    #     except:
+    #         return None
+    #     return User.query.get(int(user_id))
     
     def __repr__(self):
         return f"User('{self.id}', '{self.username}', '{self.first_name}', '{self.role}', '{self.date_joined}')"

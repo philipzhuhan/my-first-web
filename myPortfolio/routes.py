@@ -4,10 +4,9 @@ from PIL import Image
 from datetime import date, datetime, timedelta
 from flask import render_template, url_for, flash, redirect, request, jsonify
 from flask_mail import Message
-from myPortfolio import app, db, bcrypt, admin, mail
+from myPortfolio import app, db, bcrypt, admin
 from myPortfolio.forms import (RegistrationForm, LoginForm, RegisterChildForm, 
-                               UpdateParentAccountForm, AddQuestionForm, EnrollForm, 
-                               RequestResetForm, ResetPasswordForm)
+                               UpdateParentAccountForm, AddQuestionForm, EnrollForm)
 from myPortfolio.models import (User, Parent, Child, 
                                 Game_Character_Save, Question, Progress, DailyProgress, MonthlyProgress, 
                                 Enroll, Subject, Pricing)
@@ -78,50 +77,50 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
-def send_reset_email(user):
-    token = user.get_reset_token()
-    parent = Parent.query.get(user.id)
-    msg = Message('Password Reset Request',
-                  sender='theedengame@gmail.com',
-                  recipients=[parent.email])
-    msg.body = f'''To reset your password, visit the following link:
-    {url_for('reset_token', token=token, _external=True)}
-    If you did not make this request then simply ignore this email and no changes will be made.
-    '''
-    mail.send(msg)
-    print('mail sent')
+# def send_reset_email(user):
+#     token = user.get_reset_token()
+#     parent = Parent.query.get(user.id)
+#     msg = Message('Password Reset Request',
+#                   sender='theedengame@gmail.com',
+#                   recipients=[parent.email])
+#     msg.body = f'''To reset your password, visit the following link:
+#     {url_for('reset_token', token=token, _external=True)}
+#     If you did not make this request then simply ignore this email and no changes will be made.
+#     '''
+#     mail.send(msg)
+#     print('mail sent')
 
-@app.route('/reset-password', methods=['GET', 'POST'])
-def reset_request():
-    if current_user.is_authenticated:
-        return redirect(url_for('dashboard'))
-    form = RequestResetForm()
-    if form.validate_on_submit():
-        parent = Parent.query.filter_by(email=form.email.data).first()
-        user = User.query.filter_by(id=parent.id).first()
-        send_reset_email(user)
-        flash('An email has been sent with instructions to reset your password.', 'info')
-        return redirect(url_for('login'))
-    return render_template('reset_request.html', title='Reset Password', form=form)
+# @app.route('/reset-password', methods=['GET', 'POST'])
+# def reset_request():
+#     if current_user.is_authenticated:
+#         return redirect(url_for('dashboard'))
+#     form = RequestResetForm()
+#     if form.validate_on_submit():
+#         parent = Parent.query.filter_by(email=form.email.data).first()
+#         user = User.query.filter_by(id=parent.id).first()
+#         send_reset_email(user)
+#         flash('An email has been sent with instructions to reset your password.', 'info')
+#         return redirect(url_for('login'))
+#     return render_template('reset_request.html', title='Reset Password', form=form)
 
-@app.route("/reset-password/<token>", methods=['GET', 'POST'])
-def reset_token(token):
-    if current_user.is_authenticated:
-        return redirect(url_for('dashboard'))
-    user = verify_reset_token(token)
-    if user is None:
-        flash('That is an invalid or expired token', 'warning')
-        return redirect(url_for('reset_request'))
-    form = ResetPasswordForm()
-    accountOption = []
-    accountOption.append(current_user.id, current_user.first_name)
-    children = Child.query.filter_by(parent_id=current_user.id)
-    for child in children:
-        user = User.query.filter_by(id=child.id).first()
-        acc = (user.id, user.first_name)
-        accountOption.append(acc)
-    form.account.choices=accountOption
-    return render_template('reset_token.html', title='Reset Password', form=form)
+# @app.route("/reset-password/<token>", methods=['GET', 'POST'])
+# def reset_token(token):
+#     if current_user.is_authenticated:
+#         return redirect(url_for('dashboard'))
+#     user = verify_reset_token(token)
+#     if user is None:
+#         flash('That is an invalid or expired token', 'warning')
+#         return redirect(url_for('reset_request'))
+#     form = ResetPasswordForm()
+#     accountOption = []
+#     accountOption.append(current_user.id, current_user.first_name)
+#     children = Child.query.filter_by(parent_id=current_user.id)
+#     for child in children:
+#         user = User.query.filter_by(id=child.id).first()
+#         acc = (user.id, user.first_name)
+#         accountOption.append(acc)
+#     form.account.choices=accountOption
+#     return render_template('reset_token.html', title='Reset Password', form=form)
 
 
 @app.route("/dashboard")
