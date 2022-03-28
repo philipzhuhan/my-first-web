@@ -1,8 +1,9 @@
 from email.policy import default
 from sqlalchemy import false
-from myPortfolio import db, login_manager
+from myPortfolio import app, db, login_manager
 from datetime import datetime
 from flask_login import UserMixin
+from itsdangerous import URLSafeTimedSerializer as Serializer
 
 
 @login_manager.user_loader
@@ -17,6 +18,19 @@ class User(db.Model, UserMixin):
     first_name = db.Column(db.String(20), nullable=False)
     date_joined = db.Column(db.Date, nullable=False, default=datetime.utcnow)
     image_file = db.Column(db.String(20), nullable=False, default='default.png')
+    
+    def get_reset_token(self):
+        s = Serializer(app.config['SECRET_KEY'], 'reset password')
+        return s.dumps(self.id)
+    
+    @staticmethod
+    def verify_reset_token(self, token, max_age=3600):
+        s = Serializer(app.config['SECRET_KEY'], 'reset password')
+        try:
+            user_id = s.loads(token, max_age=max_age)
+        except:
+            return None
+        return User.query.get(int(user_id))
     
     def __repr__(self):
         return f"User('{self.id}', '{self.username}', '{self.first_name}', '{self.role}', '{self.date_joined}')"

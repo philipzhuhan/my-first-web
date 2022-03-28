@@ -32,7 +32,22 @@ class LoginForm(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired(), Length(min=8)])
     remember = BooleanField('Remember Me')
     submit = SubmitField('Login')
+
+class RequestResetForm(FlaskForm):
+    email = EmailField('Email', validators=[DataRequired(), Email()])
+    submit = SubmitField('Request Password Reset')
     
+    def validate_email(self, email):
+        parent = Parent.query.filter_by(email=email.data).first()
+        if parent is None:
+            raise ValidationError('There is no account associated with the email, please check again.')
+        
+class ResetPasswordForm(FlaskForm):
+    account = SelectField('Account', validators=[DataRequired()])
+    password = PasswordField('Password', validators=[DataRequired(), Length(min=8)])
+    confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), Length(min=8), EqualTo('password')])
+    submit = SubmitField('Confirm Reset')
+
 class RegisterChildForm(FlaskForm):
     grades = [('p1', 'Primary 1'), ('p2', 'Primary 2'), ('p3', 'Primary 3'), ('p4', 'Primary 4'), ('p5', 'Primary 5'), ('p6', 'Primary 6')]
     username = StringField('Username',
