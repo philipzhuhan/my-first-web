@@ -30,6 +30,62 @@ const invIconImg = {
     width: 16,
     height: 16,
 };
+let fp = new Image();
+let fpX, fpY, fpW, fpH;
+let bpX, bpY, bpW, bpH;
+let bp = new Image();
+let bpActive = false;
+const fpImg = {
+    src: "static/img/portal.png",
+    width: 640,
+    height: 64,
+    fWidth: 64,
+    fHeight: 64,
+    frame: 0,
+    maxFrame: 9,
+}
+const bpImg = {
+    src: "static/img/portal.png",
+    width: 640,
+    height: 64,
+    fWidth: 64,
+    fHeight: 64,
+    frame: 0,
+    maxFrame: 9,
+}
+
+function setPortals() {
+    fpW = canvas.width * 0.1;
+    fpH = fpW;
+    fpX = canvas.width * 0.8 - fpW / 2;
+    fpY = canvas.height * 0.5 - fpH / 2;
+
+    bpW = canvas.width * 0.1;
+    bpH = bpW;
+    bpX = canvas.width * 0.2 - bpW / 2;
+    bpY = canvas.height * 0.5 - bpH / 2;
+}
+
+function drawPortals() {
+    ctx.drawImage(fp, fpImg.fWidth * fpImg.frame, 0, fpImg.fWidth, fpImg.fHeight, fpX, fpY, fpW, fpH);
+    if (bpActive) {
+        ctx.drawImage(bp, bpImg.fWidth * bpImg.frame, 0, bpImg.fWidth, bpImg.fHeight, bpX, bpY, bpW, bpH);
+    }
+    // animate frame
+    if (fpImg.frame == fpImg.maxFrame) {
+        fpImg.frame = 0;
+    } else {
+        fpImg.frame += 1;
+    }
+    if (bpImg.frame == bpImg.maxFrame) {
+        bpImg.frame = 0;
+    } else {
+        bpImg.frame += 1;
+    }
+}
+
+function drawNPCs() {}
+
 // const redCrossImg2 = {
 //     src: "static/img/Red-cross-mark-icon.png",
 //     width: 0,
@@ -111,7 +167,7 @@ class Player {
         this.y = y;
         this.width = width;
         this.height = this.width / this.srcFrameW * this.srcFrameH;
-        if (curGameState == gameStates[0]) {
+        if (curGameState == gameStates[0] || curGameState == gameStates[2]) {
             this.speed = this.width / 3;
         }
         this.setHpMpBars();
@@ -151,7 +207,7 @@ class Player {
     }
 
     move() {
-        if (curGameState === gameStates[0]) {
+        if (curGameState === gameStates[0] || curGameState === gameStates[2]) {
             if (keys["ArrowUp"] && this.y > 0) {
                 // move up
                 this.y -= this.speed;
@@ -383,10 +439,6 @@ class Mob {
     }
 
     engageBattle() {
-        // this.x = x;
-        // this.y = y;
-        // this.width = width;
-        // this.height = this.width / this.srcFrameW * this.srcFrameH;
         this.frameX = 0;
         this.frameY = 0;
         this.moving = true;
@@ -400,17 +452,6 @@ class Mob {
 
         this.lvlFontSize = this.lvlH * 0.8;
         this.fontStyle = this.lvlFontSize + "px Arial";
-        // display hp / mp
-        // this.hpBarX = this.x;
-        // this.hpBarY = this.y + this.height;
-        // this.hpBarW = this.width;
-        // this.hpBarH = this.height * 0.1;
-        // this.curHpBarW = this.curHp / this.maxHp * this.hpBarW;
-        // this.mpBarX = this.x;
-        // this.mpBarY = this.hpBarY + this.hpBarH;
-        // this.mpBarW = this.width;
-        // this.mpBarH = this.height * 0.1;
-        // this.curMpBarW = this.curMp / this.maxMp * this.mpBarW;
     }
 
     disEngageBattle(width) {
@@ -433,17 +474,6 @@ class Mob {
 
         this.lvlFontSize = this.lvlH * 0.8;
         this.fontStyle = this.lvlFontSize + "px Arial";
-        // display hp / mp
-        // this.hpBarX = this.x;
-        // this.hpBarY = this.y + this.height;
-        // this.hpBarW = this.width;
-        // this.hpBarH = this.height * 0.1;
-        // this.curHpBarW = this.curHp / this.maxHp * this.hpBarW;
-        // this.mpBarX = this.x;
-        // this.mpBarY = this.hpBarY + this.hpBarH;
-        // this.mpBarW = this.width;
-        // this.mpBarH = this.height * 0.1;
-        // this.curMpBarW = this.curMp / this.maxMp * this.mpBarW;
     }
 }
 
@@ -455,12 +485,12 @@ let invIconX, invIconY, invIconW, invIconH;
 let helpX, helpY, helpW, helpH;
 let charInfoX, charInfoY, charInfoW, charInfoH;
 let saveX, saveY, saveW, saveH;
-let gameStates = ['Explore', 'Battle'];
+let gameStates = ['Explore', 'Battle', 'Town'];
 let curGameState = gameStates[0];
 let keys = [];
 let mobs = [];
 let mobNum = 3;
-let mapLvl = 1;
+let mapLvl = 0;
 const mobDirs = ["up", "right", "down", "left"];
 var savedCharacters = [];
 var battleMob;
@@ -521,6 +551,8 @@ function startAnimating(fps) {
     help.src = helpImg.src;
     charIcon.src = charIconImg.src;
     saveIcon.src = saveIconImg.src;
+    fp.src = fpImg.src;
+    bp.src = bpImg.src;
     // redCross.src = redCrossImg1.src;
     if (screenOrientation == 'portrait-primary' || screenOrientation == 'portrait-secondary') {
         playerH = canvas.height * 0.05;
@@ -533,8 +565,16 @@ function startAnimating(fps) {
     player = new Player(canvas.width / 2, canvas.height / 2, playerW, playerH);
     // load from save if there's existing character saved
     retrieve_characters();
+
+    // start game in the town
+    curGameState = gameStates[2];
+    mapLvl = 0;
+    console.log('start in town with fp');
+
     // initialize mobs
-    initMobs();
+    // initMobs();
+    // initialize portals
+    setPortals();
 
     // initialize save icon
     saveX = canvas.width * 0.85;
@@ -571,6 +611,8 @@ function animate() {
         if (curGameState === gameStates[0]) {
             // explore state
             drawBackground();
+            drawMapLvl();
+            drawPortals();
             for (i = 0; i < mobs.length; i++) {
                 mobs[i].draw(ctx);
             }
@@ -595,6 +637,7 @@ function animate() {
                     console.log("engaging battle");
                 }
             }
+            managePortalEncounter();
         }
         if (curGameState === gameStates[1]) {
             // battle state
@@ -609,10 +652,64 @@ function animate() {
             battleMob.move();
             manageMobAtk();
         }
+        if (curGameState === gameStates[2]) {
+            // in town state
+            drawBackground();
+            drawMapLvl();
+            drawPortals();
+            drawNPCs();
+            player.draw(ctx);
+            if (isMobile && touchDetected) {
+                drawTouchArrow();
+            }
+            player.move(ctx);
+            managePortalEncounter();
+        }
         displayNotifications();
         drawSaveIcon();
         drawCharInfo();
         drawHelp();
+    }
+}
+
+function drawMapLvl() {
+    var txt = "Map Lvl: " + mapLvl;
+    if (mapLvl == 0) {
+        txt = "Town";
+    }
+    ctx.font = '48px serif';
+    ctx.strokeText(txt, 10, 50);
+}
+
+function managePortalEncounter() {
+    // manage portal encounter
+    if (Math.sqrt(((player.x + player.width / 2) - (fpX + fpW / 2)) ** 2 + ((player.y + player.height / 2) - (fpY + fpH / 2)) ** 2) < (player.width / 2 + fpW / 2)) {
+        //Forward Portal
+        if (curGameState === gameStates[2]) {
+            curGameState = gameStates[0];
+            bpActive = true;
+            mapLvl = 1;
+            console.log('enter explore state');
+        } else {
+            mapLvl += 1;
+        }
+        player.x = canvas.width / 2 - player.width / 2;
+        player.y = canvas.height / 2 - player.height / 2;
+        initMobs();
+    }
+    if (bpActive && Math.sqrt(((player.x + player.width / 2) - (bpX + bpW / 2)) ** 2 + ((player.y + player.height / 2) - (bpY + bpH / 2)) ** 2) < (player.width / 2 + bpW / 2)) {
+        //Backward Portal
+        mapLvl -= 1;
+        if (mapLvl == 0) {
+            curGameState = gameStates[2];
+            bpActive = false;
+            player.x = canvas.width / 2 - player.width / 2;
+            player.y = canvas.height / 2 - player.height / 2;
+        } else {
+            player.x = canvas.width / 2 - player.width / 2;
+            player.y = canvas.height / 2 - player.height / 2;
+            initMobs();
+        }
     }
 }
 
@@ -951,7 +1048,7 @@ function adjustView() {
 
     // review player position and size
     var playerXPerc, playerYPerc, playerX, playerY, playerW;
-    if (curGameState == gameStates[0]) {
+    if (curGameState == gameStates[0] || curGameState == gameStates[2]) {
         playerXPerc = player.x / originW;
         playerYPerc = player.y / originH;
         if (vpWidth > vpHeight) {
@@ -963,23 +1060,26 @@ function adjustView() {
         playerY = vpHeight * playerYPerc;
         player.review(playerX, playerY, playerW);
 
+        setPortals();
         // review mobs position and size
-        for (i = 0; i < mobs.length; i++) {
-            var mobInitXPerc, mobInitYPerc, mobXPerc, mobYPerc, mobInitX, mobInitY, mobX, mobY, mobW;
-            mobInitXPerc = mobs[i].initX / originW;
-            mobInitYPerc = mobs[i].initY / originH;
-            mobXPerc = mobs[i].x / originW;
-            mobYPerc = mobs[i].y / originH;
-            if (vpWidth > vpHeight) {
-                mobW = vpWidth * 0.05;
-            } else {
-                mobW = vpHeight * 0.05 / mobs[i].srcFrameH * mobs[i].srcFrameW;
+        if (curGameState == gameStates[0]) {
+            for (i = 0; i < mobs.length; i++) {
+                var mobInitXPerc, mobInitYPerc, mobXPerc, mobYPerc, mobInitX, mobInitY, mobX, mobY, mobW;
+                mobInitXPerc = mobs[i].initX / originW;
+                mobInitYPerc = mobs[i].initY / originH;
+                mobXPerc = mobs[i].x / originW;
+                mobYPerc = mobs[i].y / originH;
+                if (vpWidth > vpHeight) {
+                    mobW = vpWidth * 0.05;
+                } else {
+                    mobW = vpHeight * 0.05 / mobs[i].srcFrameH * mobs[i].srcFrameW;
+                }
+                mobInitX = vpWidth * mobInitXPerc;
+                mobInitY = vpHeight * mobInitYPerc;
+                mobX = vpWidth * mobXPerc;
+                mobY = vpHeight * mobYPerc;
+                mobs[i].review(mobInitX, mobInitY, mobX, mobY, mobW);
             }
-            mobInitX = vpWidth * mobInitXPerc;
-            mobInitY = vpHeight * mobInitYPerc;
-            mobX = vpWidth * mobXPerc;
-            mobY = vpHeight * mobYPerc;
-            mobs[i].review(mobInitX, mobInitY, mobX, mobY, mobW);
         }
     }
     if (curGameState == gameStates[1]) {
@@ -1078,6 +1178,7 @@ function drawCursor() {
 }
 
 function initMobs() {
+    mobs = [];
     for (i = 0; i < mobNum; i++) {
         var mobX = Math.random() * (canvas.width * 0.95); //size of mob should be 5% of canvas size
         var mobY = Math.random() * (canvas.height * 0.95); //size of mob should be 5% of canvas size
@@ -1171,7 +1272,7 @@ window.addEventListener("keydown", function(e) {
             }
         }
     }
-    if (curGameState === gameStates[0]) {
+    if (curGameState === gameStates[0] || curGameState === gameStates[0]) {
         player.moving = true;
         if (e.key == "=") {
             save_character(player);
@@ -1447,7 +1548,7 @@ function trackTouchMove(e) {
         touchRotateRadians = Math.atan(touchEndY / touchEndX) + 2;
     }
 
-    if (curGameState === gameStates[0] && trackMove == true) {
+    if (curGameState === gameStates[0] || curGameState === gameStates[2] && trackMove == true) {
         player.moving = true;
         if (touchEndX > 0) {
             keys["ArrowLeft"] = false;
@@ -1488,7 +1589,7 @@ function drawTouchArrow() {
 function disableMove(e) {
     touchDetected = false;
     window.removeEventListener("touchmove", trackTouchMove);
-    if (curGameState === gameStates[0]) {
+    if (curGameState === gameStates[0] || curGameState === gameStates[2]) {
         trackMove = false
         player.moving = false;
         keys["ArrowRight"] = false;
@@ -1538,7 +1639,7 @@ window.addEventListener("touchstart", function(e) {
     }
     touchEndX = firstTouchX;
     touchEndY = firstTouchY;
-    if (curGameState === gameStates[0]) {
+    if (curGameState === gameStates[0] || curGameState === gameStates[2]) {
         trackMove = true;
         window.addEventListener("touchmove", trackTouchMove);
         window.addEventListener("touchend", disableMove);
