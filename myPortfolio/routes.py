@@ -3,7 +3,7 @@ import secrets
 from PIL import Image
 from datetime import date, datetime, timedelta
 from flask import render_template, url_for, flash, redirect, request, jsonify
-from flask_mail import Message
+# from flask_mail import Message
 from myPortfolio import app, db, bcrypt, admin
 from myPortfolio.forms import (RegistrationForm, LoginForm, RegisterChildForm, 
                                UpdateParentAccountForm, AddQuestionForm, EnrollForm)
