@@ -2,9 +2,11 @@ let vpWidth, vpHeight;
 var screenOrientation = (screen.orientation || {}).type || screen.mozOrientation || screen.msOrientation;
 let background = new Image();
 let cursor = new Image();
-let help = new Image();
+let displayFeatureIcons = true;
+let helpIcon = new Image();
 let charIcon = new Image();
 let saveIcon = new Image();
+let closeIcon = new Image();
 const helpImg = {
     src: "static/img/red-question-mark.png",
     width: 835,
@@ -30,6 +32,7 @@ const invIconImg = {
     width: 16,
     height: 16,
 };
+
 let fp = new Image();
 let fpX, fpY, fpW, fpH;
 let bpX, bpY, bpW, bpH;
@@ -96,6 +99,11 @@ const exploreMap = {
     src: "static/img/stars-6170172_1280.png",
     width: 1280,
     height: 853,
+};
+const townImg = {
+    src: "static/img/town.png",
+    width: 965,
+    height: 805,
 };
 // Map sources
 // const mapW = 1280;
@@ -482,9 +490,10 @@ let player;
 let playerX, playerY, playerW, playerH;
 let invX, invY, invW, invH;
 let invIconX, invIconY, invIconW, invIconH;
-let helpX, helpY, helpW, helpH;
+let helpIconX, helpIconY, helpIconW, helpIconH;
 let charInfoX, charInfoY, charInfoW, charInfoH;
 let saveX, saveY, saveW, saveH;
+let closeX, closeY, closeW, closeH;
 let gameStates = ['Explore', 'Battle', 'Town'];
 let curGameState = gameStates[0];
 let keys = [];
@@ -545,15 +554,16 @@ function startAnimating(fps) {
     ctx = canvas.getContext("2d");
     body.style.margin = 0;
     document.body.insertBefore(canvas, document.body.childNodes[0]);
-    background.src = exploreMap.src;
+    // complete Canvas initialization
+
     cursor.src = cursorImg.src;
     touchArrow.src = touchArrowImg.src;
-    help.src = helpImg.src;
+    helpIcon.src = helpImg.src;
     charIcon.src = charIconImg.src;
     saveIcon.src = saveIconImg.src;
+    closeIcon.src = redCrossImg1.src;
     fp.src = fpImg.src;
     bp.src = bpImg.src;
-    // redCross.src = redCrossImg1.src;
     if (screenOrientation == 'portrait-primary' || screenOrientation == 'portrait-secondary') {
         playerH = canvas.height * 0.05;
         playerW = playerH / 150 * 115;
@@ -568,29 +578,11 @@ function startAnimating(fps) {
 
     // start game in the town
     curGameState = gameStates[2];
+    background.src = townImg.src;
     mapLvl = 0;
-    console.log('start in town with fp');
-
-    // initialize mobs
-    // initMobs();
-    // initialize portals
+    console.log('start in town with fp only');
     setPortals();
-
-    // initialize save icon
-    saveX = canvas.width * 0.85;
-    saveY = canvas.height * 0.05;
-    saveW = canvas.width * 0.04;
-    saveH = saveW / saveIconImg.width / saveIconImg.height;
-    // initialize char info icon
-    charInfoX = canvas.width * 0.9;
-    charInfoY = canvas.height * 0.05;
-    charInfoW = canvas.width * 0.04;
-    charInfoH = charInfoW / charIconImg.width / charIconImg.height;
-    // initialize question mark
-    helpX = canvas.width * 0.95;
-    helpY = canvas.height * 0.05;
-    helpW = canvas.width * 0.04;
-    helpH = helpW / helpImg.width / helpImg.height;
+    positionFeatureIcons();
 
     animate();
 }
@@ -666,9 +658,19 @@ function animate() {
             managePortalEncounter();
         }
         displayNotifications();
-        drawSaveIcon();
-        drawCharInfo();
-        drawHelp();
+        if (displayFeatureIcons) {
+            drawSaveIcon();
+            drawCharInfoIcon();
+            drawHelpIcon();
+        } else {
+            if (displayHelp) {
+                drawHelp();
+            }
+            if (displayCharInfo) {
+                drawCharInfo();
+            }
+            drawCross();
+        }
     }
 }
 
@@ -687,6 +689,7 @@ function managePortalEncounter() {
         //Forward Portal
         if (curGameState === gameStates[2]) {
             curGameState = gameStates[0];
+            background.src = exploreMap.src;
             bpActive = true;
             mapLvl = 1;
             console.log('enter explore state');
@@ -702,6 +705,7 @@ function managePortalEncounter() {
         mapLvl -= 1;
         if (mapLvl == 0) {
             curGameState = gameStates[2];
+            background.src = townImg.src;
             bpActive = false;
             player.x = canvas.width / 2 - player.width / 2;
             player.y = canvas.height / 2 - player.height / 2;
@@ -762,90 +766,97 @@ function newNotification(txt) {
     notifications.push(notification);
 }
 
+function drawHelpIcon() {
+    ctx.drawImage(helpIcon, helpIconX, helpIconY, helpIconW, helpIconH);
+}
+
 function drawHelp() {
     var txtSize, txtStyle;
-    if (displayHelp == false) {
-        help.src = helpImg.src;
-        ctx.drawImage(help, helpX, helpY, helpW, helpH);
+    var helpTxt = [];
+    if (isMobile) {
+        // display touch help on mobile
+        if (curGameState === gameStates[0]) {
+            // explore
+            helpTxt.push("Help for Mobile Interface");
+            helpTxt.push("help Explore State");
+        }
+        if (curGameState === gameStates[1]) {
+            // battle
+            helpTxt.push("Help for Mobile Interface");
+            helpTxt.push("help battle State");
+        }
+        if (curGameState === gameStates[2]) {
+            // town
+            helpTxt.push("Help for Mobile Interface");
+            helpTxt.push("help town State");
+        }
     } else {
-        help.src = redCrossImg1.src;
-        var helpTxt = [];
-        if (isMobile) {
-            // display touch help on mobile
-            if (curGameState === gameStates[0]) {
-                helpTxt.push("Press H for help;");
-                helpTxt.push("Press Arrow Key to move character;");
-                helpTxt.push("Press H for help;");
-                helpTxt.push("Press Arrow Key to move character;");
-            }
-            if (curGameState === gameStates[1]) {
-                helpTxt.push("Press LEFT ARROW / RIGHT ARROW to choose;");
-                helpTxt.push("Press SPACE or ENTER to confirm selection.");
-            }
-        } else {
-            if (curGameState === gameStates[0]) {
-                helpTxt.push("Press H for help;");
-                helpTxt.push("Press Arrow Key to move character;");
-                helpTxt.push("Press H for help;");
-                helpTxt.push("Press Arrow Key to move character;");
-            }
-            if (curGameState === gameStates[1]) {
-                helpTxt.push("Press LEFT ARROW / RIGHT ARROW to choose;");
-                helpTxt.push("Press SPACE or ENTER to confirm selection.");
-            }
+        // display help for playing on computers
+        if (curGameState === gameStates[0]) {
+            helpTxt.push("Help for explore state");
+            helpTxt.push("Press H for help;");
+            helpTxt.push("Press Arrow Key to move character;");
+            helpTxt.push("Press H for help;");
+            helpTxt.push("Press Arrow Key to move character;");
         }
-        txtSize = canvas.height * 0.05;
-        txtStyle = "Arial";
-        ctx.fillStyle = "white";
-        ctx.fillRect(canvas.width * 0.02, canvas.height * 0.01, canvas.width * 0.96, canvas.height * 0.96);
-
-        ctx.fillStyle = "black";
-        ctx.font = txtSize + "px " + txtStyle;
-        for (i = 0; i < helpTxt.length; i++) {
-            ctx.fillText(helpTxt[i], canvas.width * 0.02 + txtSize, canvas.height * 0.05 + txtSize * i, canvas.width * 0.85);
+        if (curGameState === gameStates[1]) {
+            helpTxt.push("Help for battle state");
+            helpTxt.push("Press LEFT ARROW / RIGHT ARROW to choose;");
+            helpTxt.push("Press SPACE or ENTER to confirm selection.");
         }
-        ctx.drawImage(help, helpX, helpY, helpW, helpH);
+        if (curGameState === gameStates[2]) {
+            helpTxt.push("Help for town state");
+            helpTxt.push("Press LEFT ARROW / RIGHT ARROW to choose;");
+            helpTxt.push("Press SPACE or ENTER to confirm selection.");
+        }
     }
+    txtSize = canvas.height * 0.05;
+    txtStyle = "Arial";
+    ctx.fillStyle = "white";
+    ctx.fillRect(canvas.width * 0.01, canvas.height * 0.01, canvas.width * 0.99, canvas.height * 0.99);
+
+    ctx.fillStyle = "black";
+    ctx.font = txtSize + "px " + txtStyle;
+    for (i = 0; i < helpTxt.length; i++) {
+        ctx.fillText(helpTxt[i], canvas.width * 0.02 + txtSize, canvas.height * 0.05 + txtSize * i, canvas.width * 0.85);
+    }
+}
+
+function drawCharInfoIcon() {
+    ctx.drawImage(charIcon, charInfoX, charInfoY, charInfoW, charInfoH);
 }
 
 function drawCharInfo() {
     var txtSize, txtStyle;
-    if (displayCharInfo == false) {
-        charIcon.src = charIconImg.src;
-        ctx.drawImage(charIcon, charInfoX, charInfoY, charInfoW, charInfoH);
-    } else {
-        charIcon.src = redCrossImg1.src;
-        var charInfo = [];
-        if (isMobile) {
-            charInfo.push("Name: " + player.name);
-            charInfo.push("Level: " + player.lvl);
-            charInfo.push("Max HP: " + player.maxHp);
-            charInfo.push("Cur HP: " + player.curHp);
-            charInfo.push("Max MP: " + player.maxMp);
-            charInfo.push("Cur HP: " + player.curMp);
-            charInfo.push("Max EXP: " + player.maxExp);
-            charInfo.push("Cur EXP: " + player.curExp);
-            charInfo.push("ATK: " + player.atk);
-            charInfo.push("DEF: " + player.def);
-        } else {
-            // something else
-        }
-        txtSize = canvas.height * 0.05;
-        txtStyle = "Arial";
-        ctx.fillStyle = "white";
-        ctx.fillRect(canvas.width * 0.02, canvas.height * 0.01, canvas.width * 0.96, canvas.height * 0.96);
+    var charInfo = [];
+    charInfo.push("Name: " + player.name);
+    charInfo.push("Level: " + player.lvl);
+    charInfo.push("Max HP: " + player.maxHp);
+    charInfo.push("Cur HP: " + player.curHp);
+    charInfo.push("Max MP: " + player.maxMp);
+    charInfo.push("Cur HP: " + player.curMp);
+    charInfo.push("Max EXP: " + player.maxExp);
+    charInfo.push("Cur EXP: " + player.curExp);
+    charInfo.push("ATK: " + player.atk);
+    charInfo.push("DEF: " + player.def);
+    txtSize = canvas.height * 0.05;
+    txtStyle = "Arial";
+    ctx.fillStyle = "white";
+    ctx.fillRect(canvas.width * 0.02, canvas.height * 0.01, canvas.width * 0.96, canvas.height * 0.96);
 
-        ctx.fillStyle = "black";
-        ctx.font = txtSize + "px " + txtStyle;
-        for (i = 0; i < charInfo.length; i++) {
-            ctx.fillText(charInfo[i], canvas.width * 0.02 + txtSize, canvas.height * 0.05 + txtSize * i, canvas.width * 0.85);
-        }
-        ctx.drawImage(charIcon, charInfoX, charInfoY, charInfoW, charInfoH);
+    ctx.fillStyle = "black";
+    ctx.font = txtSize + "px " + txtStyle;
+    for (i = 0; i < charInfo.length; i++) {
+        ctx.fillText(charInfo[i], canvas.width * 0.02 + txtSize, canvas.height * 0.05 + txtSize * i, canvas.width * 0.85);
     }
 }
 
 function drawSaveIcon() {
     ctx.drawImage(saveIcon, saveX, saveY, saveW, saveH);
+}
+
+function drawCross() {
+    ctx.drawImage(closeIcon, closeX, closeY, closeW, closeH);
 }
 
 function initiate_action_box() {
@@ -1063,6 +1074,7 @@ function adjustView() {
         setPortals();
         // review mobs position and size
         if (curGameState == gameStates[0]) {
+            // explore state
             for (i = 0; i < mobs.length; i++) {
                 var mobInitXPerc, mobInitYPerc, mobXPerc, mobYPerc, mobInitX, mobInitY, mobX, mobY, mobW;
                 mobInitXPerc = mobs[i].initX / originW;
@@ -1083,6 +1095,8 @@ function adjustView() {
         }
     }
     if (curGameState == gameStates[1]) {
+        // battle state
+        // adjust player size & position
         if (vpWidth > vpHeight) {
             playerH = vpHeight / 4;
             playerW = playerH / player.srcFrameH * player.srcFrameW;
@@ -1120,40 +1134,59 @@ function adjustView() {
 
     canvas.width = vpWidth;
     canvas.height = vpHeight;
-    if (vpWidth > vpHeight) {
-        // resize question mark
-        helpW = canvas.width * 0.03;
-        helpH = helpW / helpImg.width * helpImg.height;
-        helpX = canvas.width - helpW;
-        helpY = canvas.height * 0.05;
-        // resize char info icon
-        charInfoW = canvas.width * 0.03;
-        charInfoH = charInfoW / charIconImg.width * charIconImg.height;
-        charInfoX = helpX - charInfoW;
-        charInfoY = canvas.height * 0.05;
-        // resize save icon
-        saveW = canvas.width * 0.03;
-        saveH = saveW / saveIconImg.width * saveIconImg.height;
-        saveX = charInfoX - saveW;
-        saveY = canvas.height * 0.05;
-    } else {
-        // resize question mark
-        helpH = canvas.height * 0.03;
-        helpW = helpH / helpImg.height * helpImg.width;
-        helpX = canvas.width - helpW;
-        helpY = 0;
-        // resize char info icon
-        charInfoH = canvas.height * 0.03;
-        charInfoW = charInfoH / charIconImg.height * charIconImg.width;
-        charInfoX = canvas.width - charInfoW;
-        charInfoY = helpY + helpH;
-        // resize save icon
-        saveH = canvas.height * 0.03;
-        saveW = saveH / saveIconImg.height * saveIconImg.width;
-        saveX = canvas.width - saveW;
-        saveY = charInfoY + charInfoH;
-    }
+    positionFeatureIcons();
+}
 
+function positionFeatureIcons() {
+    if (vpWidth > vpHeight) {
+        if (displayFeatureIcons) {
+            // resize question mark
+            helpIconW = canvas.width * 0.05;
+            helpIconH = helpIconW / helpImg.width * helpImg.height;
+            helpIconX = canvas.width - helpIconW * 1.5;
+            helpIconY = canvas.height * 0.05;
+            // resize char info icon
+            charInfoW = canvas.width * 0.05;
+            charInfoH = charInfoW / charIconImg.width * charIconImg.height;
+            charInfoX = helpIconX - charInfoW * 1.5;
+            charInfoY = canvas.height * 0.05;
+            // resize save icon
+            saveW = canvas.width * 0.05;
+            saveH = saveW / saveIconImg.width * saveIconImg.height;
+            saveX = charInfoX - saveW * 1.5;
+            saveY = canvas.height * 0.05;
+        } else {
+            // resize cross mark
+            closeW = canvas.width * 0.05;
+            closeH = closeW / redCrossImg1.width * redCrossImg1.height;
+            closeX = canvas.width - closeW * 1.5;
+            closeY = canvas.height * 0.05;
+        }
+    } else {
+        if (displayFeatureIcons) {
+            // resize question mark
+            helpIconH = canvas.height * 0.05;
+            helpIconW = helpIconH / helpImg.height * helpImg.width;
+            helpIconX = canvas.width - helpIconW;
+            helpIconY = 0;
+            // resize char info icon
+            charInfoH = canvas.height * 0.05;
+            charInfoW = charInfoH / charIconImg.height * charIconImg.width;
+            charInfoX = canvas.width - charInfoW;
+            charInfoY = helpIconY + helpIconH;
+            // resize save icon
+            saveH = canvas.height * 0.05;
+            saveW = saveH / saveIconImg.height * saveIconImg.width;
+            saveX = canvas.width - saveW;
+            saveY = charInfoY + charInfoH;
+        } else {
+            // resize cross mark
+            closeH = canvas.height * 0.05;
+            closeW = closeH / redCrossImg1.height * redCrossImg1.width;
+            closeX = canvas.width - closeW * 1.5;
+            closeY = canvas.height * 0.05;
+        }
+    }
 }
 
 function drawBackground() {
@@ -1600,42 +1633,51 @@ function disableMove(e) {
     window.removeEventListener("touchend", disableMove);
 }
 
+function mobsStop() {
+    for (i = 0; i < mobs.length; i++) {
+        mobs[i].moving = false;
+    }
+}
+
+function mobsMove() {
+    for (i = 0; i < mobs.length; i++) {
+        mobs[i].moving = true;
+    }
+}
+
 window.addEventListener("touchstart", function(e) {
     e.preventDefault();
     touch = e.touches[0];
     firstTouchX = touch.clientX;
     firstTouchY = touch.clientY;
-    if (firstTouchX > helpX && firstTouchX < helpX + helpW && firstTouchY > helpY && firstTouchY < helpY + helpH) {
-        // click is in the help icon area
-        if (displayHelp == true) {
-            displayHelp = false;
-            for (i = 0; i < mobs.length; i++) {
-                mobs[i].moving = true;
-            }
-        } else {
+    if (displayFeatureIcons) {
+        // no individual feature dashboard open
+        if (firstTouchX > helpIconX && firstTouchX < helpIconX + helpIconW && firstTouchY > helpIconY && firstTouchY < helpIconY + helpIconH) {
+            // click is in the help icon area
+            mobsStop();
             displayHelp = true;
-            for (i = 0; i < mobs.length; i++) {
-                mobs[i].moving = false;
-            }
+            displayFeatureIcons = false;
+            console.log("Help Icon is clicked");
         }
-    }
-    if (firstTouchX > charInfoX && firstTouchX < charInfoX + charInfoW && firstTouchY > charInfoY && firstTouchY < charInfoY + charInfoH) {
-        // click is in the char icon area
-        if (displayCharInfo == true) {
-            displayCharInfo = false;
-            for (i = 0; i < mobs.length; i++) {
-                mobs[i].moving = true;
-            }
-        } else {
+        if (firstTouchX > charInfoX && firstTouchX < charInfoX + charInfoW && firstTouchY > charInfoY && firstTouchY < charInfoY + charInfoH) {
+            // click is in the char icon area
+            mobsStop();
             displayCharInfo = true;
-            for (i = 0; i < mobs.length; i++) {
-                mobs[i].moving = false;
-            }
+            displayFeatureIcons = false;
+            console.log("char info Icon is clicked");
         }
-    }
-    if (firstTouchX > saveX && firstTouchX < saveX + saveW && firstTouchY > saveY && firstTouchY < saveY + saveH) {
-        // click is in the save icon area
-        save_character(player);
+        if (firstTouchX > saveX && firstTouchX < saveX + saveW && firstTouchY > saveY && firstTouchY < saveY + saveH) {
+            // click is in the save icon area
+            save_character(player);
+        }
+    } else {
+        // feature dashboard open (help || char info), redcross is displayed
+        if (firstTouchX > closeX && firstTouchX < closeX + closeW && firstTouchY > closeY && firstTouchY < closeY + closeH) {
+            mobsMove();
+            displayFeatureIcons = true;
+            displayHelp = false;
+            displayCharInfo = false;
+        }
     }
     touchEndX = firstTouchX;
     touchEndY = firstTouchY;
