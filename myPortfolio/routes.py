@@ -370,6 +370,34 @@ def save_progress():
     duration = req["duration"]
     progress = Progress(child_id=current_user.id, subject=subject, result=result, operation=operation, question=question, correct_ans=correctAnswer, ans_chosen=ansChosen, duration=duration)
     db.session.add(progress)
+    # update daily progress
+    dailyProgress = DailyProgress.query.filter_by(child_id=current_user.id, subject=subject, operation=operation, date=date.today()).first()
+    if dailyProgress:
+        dailyProgress.avg_duration = (dailyProgress.avg_duration * dailyProgress.total_attempted + duration) / (dailyProgress.total_attempted + 1)
+        dailyProgress.total_attempted += 1
+        if result:
+            dailyProgress.ans_correct += 1
+    else: 
+        if result:
+            ans_correct = 1
+        else:
+            ans_correct = 0 
+        dailyProgress = DailyProgress(child_id=current_user.id, date=date.today(), subject=subject, operation=operation, total_attempted=1, ans_correct=ans_correct, avg_duration=duration)
+        db.session.add(dailyProgress)
+    # update monthly progress
+    monthlyProgress = MonthlyProgress.query.filter_by(child_id=current_user.id, year=date.today().year, month=date.today().month, subject=subject, operation=operation).first()
+    if monthlyProgress:
+        monthlyProgress.avg_duration = (monthlyProgress.avg_duration * monthlyProgress.total_attempted + duration) / (monthlyProgress.total_attempted + 1)
+        monthlyProgress.total_attempted += 1
+        if result:
+            monthlyProgress.ans_correct += 1
+    else:
+        if result:
+            ans_correct = 1
+        else:
+            ans_correct = 0
+        monthlyProgress = MonthlyProgress(child_id=current_user.id, year=date.today().year, month=date.today().month, subject=subject, operation=operation, total_attempted=1, ans_correct=ans_correct, avg_duration=duration)
+        db.session.add(monthlyProgress)
     db.session.commit()
     return "OK"
 

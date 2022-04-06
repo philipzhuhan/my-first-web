@@ -2,7 +2,7 @@
 {% block content %}
     {% if current_user.role == 'child' %}
         <div class='container'>
-            <a type="button" class="btn btn-outline-primary btn-lg btn-block">Enter Eden</a>
+            <a type="button" class="btn btn-outline-primary btn-lg btn-block" href="{{url_for('jsGame')}}">Enter Eden</a>
         </div>
     {% else %}
         <h1>Welcome to my Page</h1>
